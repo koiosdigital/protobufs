@@ -3,9 +3,9 @@ syntax = "proto3";
 package levitree_cpcd;
 
 enum DeviceType {
-  ADC = 0;
-  DISTANCE_SENSOR = 1;
-  VFD = 2;
+  DEVICE_ADC = 0;
+  DEVICE_DISTANCE_SENSOR = 1;
+  DEVICE_VFD = 2;
 }
 
 enum PressureSensorRating {
@@ -21,11 +21,30 @@ enum PressureSensorRating {
   PSI_500 = 9;
 }
 
+enum PressureSensorLocation {
+  INLET_PULP = 0;
+  INLET_WATER = 1;
+  INLET_VISCOSIFIER = 2;
+  OUTLET = 3;
+}
+
 enum ADCPurpose {
-  PRESSURE_SENSOR = 0;
-  TEMPERATURE_SENSOR = 1;
-  CURRENT_SENSOR = 2;
-  VOLTAGE_SENSOR = 3;
+  ADC_GENERIC = 0;
+  PRESSURE_SENSOR = 1;
+  TEMPERATURE_SENSOR = 2;
+  CURRENT_SENSOR = 3;
+  VOLTAGE_SENSOR = 4;
+}
+
+enum DistanceSensorPurpose {
+  DISTANCE_SENSOR_GENERIC = 0;
+  TANK_LEVEL = 1;
+}
+
+enum VFDLocation {
+  VFD_GENERIC = 0;
+  VFD_OUTLET = 1;
+  VFD_AUGER = 2;
 }
 
 enum ADCChannelValueInterpretation {
@@ -103,6 +122,7 @@ message ADCChannelSettings {
   int32 channel_number = 2;
   ADCPurpose purpose = 3;
   optional PressureSensorRating pressure_sensor_rating = 4;
+  optional PressureSensorLocation pressure_sensor_location = 5;
 }
 
 message ADCSettings {
@@ -142,6 +162,7 @@ message DistanceSensor {
 message DistanceSensorSettings {
   string name = 1;
   int32 sample_rate = 2;
+  DistanceSensorPurpose purpose = 3;
 }
 
 message DistanceSensorStateUpdate {
@@ -150,10 +171,40 @@ message DistanceSensorStateUpdate {
   float distance_cm = 3;
 }
 
+message SetDistanceSensorSettings {
+  bytes ecu_id = 1;
+  DistanceSensorSettings settings = 2;
+}
+
+message SetVFDSettings {
+  bytes ecu_id = 1;
+  VFDSettings settings = 2;
+}
+
+message VFDCalibration {
+  float frequency_hz = 1; //at what frequency
+  float volume_gal = 2; //did how many gallons pass
+  float time_seconds = 3; //in how many seconds
+}
+
+message VFDSettings {
+  string name = 1;
+  VFDLocation location = 2;
+  repeated VFDCalibration calibrations = 3;
+}
 
 message VFD {
   bytes ecu_id = 1;
   VFDSettings settings = 2;
+}
+
+message VFDStateUpdate {
+  bytes ecu_id = 1;
+  float frequency = 2;
+  bool direction = 3;
+  bool stopped = 4;
+  float m3_per_hour = 5;
+  bool is_calibrated = 6;
 }
 
 message AttachedDevice {
@@ -165,6 +216,20 @@ message AttachedDevice {
   }
 }
 
+message SetVFDDirection {
+  bytes ecu_id = 1;
+  bool direction = 2;
+}
+
+message SetVFDFrequency {
+  bytes ecu_id = 1;
+  float frequency = 2;
+}
+
 message AttachedDevices {
   repeated AttachedDevice devices = 1;
+}
+
+message Heartbeat {
+  bytes ecu_id = 1;
 }
