@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package levimesh;
+
+message MeshMessage {
+  oneof message {
+    DiscoveryBroadcast discovery_broadcast = 1; //done
+    ModbusReadHoldingRegistersRequest modbus_read_holding_registers_request = 2; //done
+    ModbusReadHoldingRegistersResponse modbus_read_holding_registers_response = 3; //done
+    ModbusWriteRegistersRequest modbus_write_registers_request = 6; //done
+    ModbusReadInputRegistersRequest modbus_read_input_registers_request = 8; //done
+    ModbusReadInputRegistersResponse modbus_read_input_registers_response = 9; //done
+    ModbusWriteCoilsRequest modbus_write_coils_request = 10; //done
+    ModbusReadCoilsRequest modbus_read_coils_request = 12; //done
+    ModbusReadCoilsResponse modbus_read_coils_response = 13; //done
+    ModbusReadDiscreteInputsRequest modbus_read_discrete_inputs_request = 14; //done
+    ModbusReadDiscreteInputsResponse modbus_read_discrete_inputs_response = 15; //done
+    MotorDriverRequest motor_driver_request = 26; //done
+    MotorDriverStatus motor_driver_status = 27;
+    SetDebugMode set_debug_mode = 28;
+    GetINAPower get_ina_power = 29;
+    GetINAPowerResponse get_ina_power_response = 30;
+    GetADCChannel get_adc = 31;
+    GetADCChannelResponse get_adc_response = 32;
+    MotorDriverEmergencyStop motor_driver_emergency_stop = 41;
+    Acknowledge acknowledge = 99;
+  }
+  int32 message_id = 20;
+}
+
+message Acknowledge {
+  bool ack = 1;
+}
+
+message DiscoveryBroadcast {
+  string name = 1;
+  bytes mcu_serial = 2;
+  int32 version = 3;
+}
+
+message ModbusReadHoldingRegistersRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+}
+
+message ModbusReadHoldingRegistersResponse {
+  int32 slave_id = 1;
+  int32 quantity = 2;
+  int32 address = 3;
+  repeated int32 data = 4;
+}
+
+message ModbusWriteRegistersRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+  repeated int32 data = 4;
+}
+
+message ModbusReadInputRegistersRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+}
+
+message ModbusReadInputRegistersResponse {
+  int32 slave_id = 1;
+  int32 quantity = 2;
+  int32 address = 3;
+  repeated int32 data = 4;
+}
+
+message ModbusWriteCoilsRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+  repeated int32 data = 4;
+}
+
+message ModbusReadCoilsRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+}
+
+message ModbusReadCoilsResponse {
+  int32 slave_id = 1;
+  int32 quantity = 2;
+  int32 address = 3;
+  repeated int32 data = 4;
+}
+
+message ModbusReadDiscreteInputsRequest {
+  int32 slave_id = 1;
+  int32 address = 2;
+  int32 quantity = 3;
+}
+
+message ModbusReadDiscreteInputsResponse {
+  int32 slave_id = 1;
+  int32 quantity = 2;
+  int32 address = 3;
+  repeated int32 data = 4;
+}
+
+message MotorDriverRequest {
+  bool enabled = 1;
+  int32 speed = 2;
+  int32 direction = 3;
+}
+
+message MotorDriverStatus {
+  bool enabled = 1;
+  int32 speed = 2;
+  int32 direction = 3;
+  uint32 voltage = 4;
+  int32 left_speed = 5;
+  int32 right_speed = 6;
+}
+
+message MotorDriverResponse {
+  bool ack = 1;
+}
+
+message SetDebugMode {
+  bool enabled = 1;
+}
+
+message GetINAPower {
+  int32 address = 1;
+}
+
+message GetINAPowerResponse {
+  double voltage = 1;
+  double current = 2;
+  double power = 3;
+}
+
+message GetADCChannel {
+  int32 channel = 1;
+  int32 address = 2;
+}
+
+message GetADCChannelResponse {
+  int32 channel = 1;
+  int32 address = 2;
+  double value = 3;
+}
+
+message MotorDriverEmergencyStop {
+  bool enabled = 1;
+}

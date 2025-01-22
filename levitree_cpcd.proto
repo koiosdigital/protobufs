@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package levitree_cpcd;
+
+enum DeviceType {
+  PRESSURE_SENSOR = 0;
+  DISTANCE_SENSOR = 1;
+  VFD = 2;
+}
+
+message CPCMessage {
+  oneof message {
+    Acknowledge acknowledge = 1; //done
+    
+    GetSystemInfo get_system_info = 2; //done, response is SystemInfoResponse
+    SystemInfoResponse system_info_response = 3; //done
+
+    DiscoverAttachedDevices discover_attached_devices = 4; //done, response is DiscoveryPending
+    DiscoveryPending discovery_pending = 5; //done, sends DiscoveryComplete when done
+    DiscoveryComplete discovery_complete = 6; //done
+
+    GetAttachedDevices get_attached_devices = 7; //done, response is AttachedDevices
+    GetDeviceInformation get_device_information = 255; //done, response is DeviceInformation
+    DeviceInformation device_information = 254; //done
+    AttachedDevices attached_devices = 8; //done
+
+    //pressure sensor
+    SetPressureSensorSettings set_pressure_sensor_settings = 9; //done
+    PressureSensorStateUpdate pressure_sensor_state_update = 10; //done
+
+    //distance sensor
+    SetDistanceSensorSettings set_distance_sensor_settings = 11; //done
+    DistanceSensorStateUpdate distance_sensor_state_update = 12; //done
+
+    //VFD
+    SetVFDSettings set_vfd_settings = 13; //done
+    VFDStateUpdate vfd_state_update = 14; //done
+    SetVFDDirection set_vfd_direction = 15; //done
+    SetVFDFrequency set_vfd_frequency = 16; //done
+
+    Heartbeat heartbeat = 17; //done
+  }
+}
+
+message Acknowledge {
+
+}
+
+message GetSystemInfo {
+  
+}
+
+message SystemInfoResponse {
+  int32 message_id = 1;
+  string firmware_version = 2;
+  string hardware_version = 3;
+  string serial_number = 4;
+}
+
+message DiscoverAttachedDevices {
+  
+}
+
+message GetAttachedDevices {
+  
+}
+
+message PressureSensor {
+  bytes ecu_id = 1;
+  PressureSensorSettings settings = 2;
+}
+
+
+message DistanceSensor {
+  bytes ecu_id = 1;
+  DistanceSensorSettings settings = 2;
+}
+
+message VFD {
+  bytes ecu_id = 1;
+  VFDSettings settings = 2;
+}
+
+message AttachedDevice {
+  DeviceType device_type = 1;
+  oneof device {
+    PressureSensor pressure_sensor = 2;
+    DistanceSensor distance_sensor = 3;
+    VFD vfd = 4;
+  }
+}
+
+message AttachedDevices {
+  repeated AttachedDevice devices = 1;
+}
