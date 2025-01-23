@@ -1,7 +1,18 @@
-levimesh.DiscoveryBroadcast.mcu_serial max_size:16 fixed_length:true
-levimesh.ModbusReadHoldingRegistersResponse.data max_count:40
-levimesh.ModbusWriteRegistersRequest.data max_count:40
-levimesh.ModbusReadInputRegistersResponse.data max_count:40
-levimesh.ModbusWriteCoilsRequest.data max_count:40
-levimesh.ModbusReadCoilsResponse.data max_count:40
-levimesh.ModbusReadDiscreteInputsResponse.data max_count:40
+levitree_cpcd.SystemInfoResponse.mcu_id fixed_length:true max_size:16
+levitree_cpcd.ADC.mcu_id fixed_length:true max_size:16
+levitree_cpcd.ADCStateUpdate.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetADCSettings.mcu_id fixed_length:true max_size:16
+levitree_cpcd.ADCSettings.name max_size:40 fixed_length:true
+levitree_cpcd.DistanceSensor.mcu_id fixed_length:true max_size:16
+levitree_cpcd.DistanceSensorSettings.name max_size:40 fixed_length:true
+levitree_cpcd.DistanceSensorStateUpdate.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetDistanceSensorSettings.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetVFDSettings.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetVFDDirection.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetVFDFrequency.mcu_id fixed_length:true max_size:16
+levitree_cpcd.VFDSettings.name max_size:40 fixed_length:true
+levitree_cpcd.VFD.mcu_id fixed_length:true max_size:16
+levitree_cpcd.VFDStateUpdate.mcu_id fixed_length:true max_size:16
+levitree_cpcd.IdentifiedDevice.mcu_id fixed_length:true max_size:16
+levitree_cpcd.SetDeviceOutgoingIdentity.mcu_id fixed_length:true max_size:16
+levitree_cpcd.Heartbeat.mcu_id fixed_length:true max_size:16

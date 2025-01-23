@@ -83,6 +83,11 @@ message CPCMessage {
     SetVFDFrequency set_vfd_frequency = 16; //done, returns Acknowledge
 
     Heartbeat heartbeat = 17; //done
+
+    //internal
+    GetIdentifiedDevice get_identified_device = 250;
+    IdentifiedDevice identified_device = 251;
+    SetDeviceOutgoingIdentity set_device_outgoing_identity = 252;
   }
 }
 
@@ -112,9 +117,9 @@ message DiscoveryComplete {
 
 message SystemInfoResponse {
   int32 message_id = 1;
-  string firmware_version = 2;
-  string hardware_version = 3;
-  string serial_number = 4;
+  int32 firmware_version = 2;
+  int32 hardware_version = 3;
+  bytes mcu_id = 4;
 }
 
 message ADCChannelSettings {
@@ -126,14 +131,14 @@ message ADCChannelSettings {
 }
 
 message ADCSettings {
-  string name = 1;
+  bytes name = 1;
   int32 channels_mask = 2;
   int32 sample_rate = 3;
   repeated ADCChannelSettings channel_settings = 4;
 }
 
 message ADC {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   ADCSettings settings = 2;
 }
 
@@ -144,40 +149,40 @@ message ADCChannelValue {
 }
 
 message ADCStateUpdate {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   int32 sample_rate = 2;
   repeated ADCChannelValue values = 3;
 }
 
 message SetADCSettings {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   ADCSettings settings = 2;
 }
 
 message DistanceSensor {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   DistanceSensorSettings settings = 2;
 }
 
 message DistanceSensorSettings {
-  string name = 1;
+  bytes name = 1;
   int32 sample_rate = 2;
   DistanceSensorPurpose purpose = 3;
 }
 
 message DistanceSensorStateUpdate {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   int32 sample_rate = 2;
   float distance_cm = 3;
 }
 
 message SetDistanceSensorSettings {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   DistanceSensorSettings settings = 2;
 }
 
 message SetVFDSettings {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   VFDSettings settings = 2;
 }
 
@@ -188,18 +193,18 @@ message VFDCalibration {
 }
 
 message VFDSettings {
-  string name = 1;
+  bytes name = 1;
   VFDLocation location = 2;
   repeated VFDCalibration calibrations = 3;
 }
 
 message VFD {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   VFDSettings settings = 2;
 }
 
 message VFDStateUpdate {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
   float frequency = 2;
   bool direction = 3;
   bool stopped = 4;
@@ -216,14 +221,29 @@ message AttachedDevice {
   }
 }
 
+message GetIdentifiedDevice {
+  
+}
+
+message IdentifiedDevice {
+  bytes mcu_id = 1;
+  DeviceType device_type = 2;
+}
+
+message SetDeviceOutgoingIdentity {
+  bytes mcu_id = 1;
+  int32 sensenet_channel = 2;
+}
+
 message SetVFDDirection {
-  bytes ecu_id = 1;
-  bool direction = 2;
+  bytes mcu_id = 1;
+  bool direction = 2; //true = forward, false = reverse
+  bool enabled = 3; //true = enabled, false = disabled
 }
 
 message SetVFDFrequency {
-  bytes ecu_id = 1;
-  float frequency = 2;
+  bytes mcu_id = 1;
+  float frequency_hz = 2;
 }
 
 message AttachedDevices {
@@ -231,5 +251,5 @@ message AttachedDevices {
 }
 
 message Heartbeat {
-  bytes ecu_id = 1;
+  bytes mcu_id = 1;
 }
