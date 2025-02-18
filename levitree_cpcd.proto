@@ -68,7 +68,6 @@ enum DestinationType {
 }
 
 message RoutableMessage {
-  int32 message_id = 1;  
   oneof destination {
     bytes destination_mcu_id = 2;
     DestinationType destination_type = 3;
