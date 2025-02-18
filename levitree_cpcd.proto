@@ -21,6 +21,12 @@ enum PressureSensorRating {
   PSI_500 = 9;
 }
 
+enum VFDHaltMode {
+  VFD_HALT_MODE_NONE = 0;
+  VFD_HALT_MODE_SOFT = 1;
+  VFD_HALT_MODE_HARD = 2;
+}
+
 enum PressureSensorLocation {
   INLET_PULP = 0;
   INLET_WATER = 1;
@@ -54,40 +60,52 @@ enum ADCChannelValueInterpretation {
   PRESSURE_PSI = 3;
 }
 
-message CPCMessage {
+enum DestinationType {
+  DESTINATION_MCU_ID = 0;
+  DESTINATION_IS_CPC = 1;
+  DESTINATION_IS_HOST = 2;
+  DESTINATION_IS_BROADCAST = 3;
+}
+
+message RoutableMessage {
+  int32 message_id = 1;  
+  oneof destination {
+    bytes destination_mcu_id = 2;
+    DestinationType destination_type = 3;
+  }
   oneof message {
-    Acknowledge acknowledge = 1; //done
+    Acknowledge acknowledge = 5; //done
     
-    GetSystemInfo get_system_info = 2; //done, response is SystemInfoResponse
-    SystemInfoResponse system_info_response = 3; //done
+    GetSystemInfo get_system_info = 6; //done, response is SystemInfoResponse
+    SystemInfoResponse system_info_response = 7; //done
 
-    DiscoverAttachedDevices discover_attached_devices = 4; //done, response is DiscoveryPending
-    DiscoveryPending discovery_pending = 5; //done, sends DiscoveryComplete when done
-    DiscoveryComplete discovery_complete = 6; //done
+    DiscoverAttachedDevices discover_attached_devices = 8; //done, response is DiscoveryPending
+    DiscoveryPending discovery_pending = 9; //done, sends DiscoveryComplete when done
+    DiscoveryComplete discovery_complete = 10; //done
 
-    GetAttachedDevices get_attached_devices = 7; //done, response is AttachedDevices
-    AttachedDevices attached_devices = 8; //done
+    GetAttachedDevices get_attached_devices = 11; //done, response is AttachedDevices
+    AttachedDevices attached_devices = 12; //done
 
     //adc
-    SetADCSettings set_adc_settings = 9; //done, returns Acknowledge
-    ADCStateUpdate adc_state_update = 10; //done
+    SetADCSettings set_adc_settings = 13; //done, returns Acknowledge
+    ADCStateUpdate adc_state_update = 14; //done
 
     //distance sensor
-    SetDistanceSensorSettings set_distance_sensor_settings = 11; //done, returns Acknowledge
-    DistanceSensorStateUpdate distance_sensor_state_update = 12; //done
+    SetDistanceSensorSettings set_distance_sensor_settings = 15; //done, returns Acknowledge
+    DistanceSensorStateUpdate distance_sensor_state_update = 16; //done
 
     //VFD
-    SetVFDSettings set_vfd_settings = 13; //done, returns Acknowledge
-    VFDStateUpdate vfd_state_update = 14; //done
-    SetVFDDirection set_vfd_direction = 15; //done, returns Acknowledge
-    SetVFDFrequency set_vfd_frequency = 16; //done, returns Acknowledge
+    SetVFDSettings set_vfd_settings = 17; //done, returns Acknowledge
+    VFDStateUpdate vfd_state_update = 18; //done
+    SetVFDDirection set_vfd_direction = 19; //done, returns Acknowledge
+    SetVFDFrequency set_vfd_frequency = 20; //done, returns Acknowledge
 
-    Heartbeat heartbeat = 17; //done
+    Heartbeat heartbeat = 21; //done
 
     //internal
-    GetIdentifiedDevice get_identified_device = 250;
-    IdentifiedDevice identified_device = 251;
-    SetDeviceOutgoingIdentity set_device_outgoing_identity = 252;
+    GetIdentifiedDevice get_identified_device = 22;
+    IdentifiedDevice identified_device = 23;
+    SetDeviceOutgoingIdentity set_device_outgoing_identity = 24;
   }
 }
 
@@ -119,8 +137,9 @@ message SystemInfoResponse {
   int32 message_id = 1;
   int32 firmware_version = 2;
   int32 hardware_version = 3;
-  bytes mcu_id = 4;
 }
+
+//MARK: ADC
 
 message ADCChannelSettings {
   bool enabled = 1;
@@ -138,7 +157,6 @@ message ADCSettings {
 }
 
 message ADC {
-  bytes mcu_id = 1;
   ADCSettings settings = 2;
 }
 
@@ -149,18 +167,17 @@ message ADCChannelValue {
 }
 
 message ADCStateUpdate {
-  bytes mcu_id = 1;
   int32 sample_rate = 2;
   repeated ADCChannelValue values = 3;
 }
 
 message SetADCSettings {
-  bytes mcu_id = 1;
   ADCSettings settings = 2;
 }
 
+//MARK: Distance Sensor
+
 message DistanceSensor {
-  bytes mcu_id = 1;
   DistanceSensorSettings settings = 2;
 }
 
@@ -171,18 +188,17 @@ message DistanceSensorSettings {
 }
 
 message DistanceSensorStateUpdate {
-  bytes mcu_id = 1;
   int32 sample_rate = 2;
   float distance_cm = 3;
 }
 
 message SetDistanceSensorSettings {
-  bytes mcu_id = 1;
   DistanceSensorSettings settings = 2;
 }
 
+//MARK: VFD
+
 message SetVFDSettings {
-  bytes mcu_id = 1;
   VFDSettings settings = 2;
 }
 
@@ -195,16 +211,15 @@ message VFDCalibration {
 message VFDSettings {
   bytes name = 1;
   VFDLocation location = 2;
-  repeated VFDCalibration calibrations = 3;
+  VFDHaltMode halt_mode = 3;
+  repeated VFDCalibration calibrations = 4;
 }
 
 message VFD {
-  bytes mcu_id = 1;
   VFDSettings settings = 2;
 }
 
 message VFDStateUpdate {
-  bytes mcu_id = 1;
   float frequency = 2;
   bool direction = 3;
   bool stopped = 4;
@@ -226,23 +241,19 @@ message GetIdentifiedDevice {
 }
 
 message IdentifiedDevice {
-  bytes mcu_id = 1;
   DeviceType device_type = 2;
 }
 
 message SetDeviceOutgoingIdentity {
-  bytes mcu_id = 1;
   int32 sensenet_channel = 2;
 }
 
 message SetVFDDirection {
-  bytes mcu_id = 1;
   bool direction = 2; //true = forward, false = reverse
   bool enabled = 3; //true = enabled, false = disabled
 }
 
 message SetVFDFrequency {
-  bytes mcu_id = 1;
   float frequency_hz = 2;
 }
 
@@ -251,5 +262,5 @@ message AttachedDevices {
 }
 
 message Heartbeat {
-  bytes mcu_id = 1;
+
 }
