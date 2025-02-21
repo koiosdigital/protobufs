@@ -228,11 +228,8 @@ message VFDStateUpdate {
 
 message AttachedDevice {
   DeviceType device_type = 1;
-  oneof device {
-    ADC adc = 2;
-    DistanceSensor distance_sensor = 3;
-    VFD vfd = 4;
-  }
+  bytes mcu_id = 2;
+  bytes name = 3;
 }
 
 message GetIdentifiedDevice {
