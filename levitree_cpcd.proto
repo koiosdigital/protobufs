@@ -85,7 +85,7 @@ message RoutableMessage {
 
     GetAttachedDevices get_attached_devices = 11; //done, response is AttachedDevices
     AttachedDevices attached_devices = 12; //done
-    RequestStateUpdate request_state_update = 21; //done
+    RequestStateUpdate request_state_update = 13; //done
 
     //adc
     SetADCSettings set_adc_settings = 20; //done, returns Acknowledge
