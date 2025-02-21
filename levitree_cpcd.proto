@@ -3,9 +3,10 @@ syntax = "proto3";
 package levitree_cpcd;
 
 enum DeviceType {
-  DEVICE_ADC = 0;
-  DEVICE_DISTANCE_SENSOR = 1;
-  DEVICE_VFD = 2;
+  DEVICE_ADC_8 = 0;
+  DEVICE_ADC_2 = 1;
+  DEVICE_DISTANCE_SENSOR = 3;
+  DEVICE_VFD_FRENIC = 4;
 }
 
 enum PressureSensorRating {
@@ -136,6 +137,8 @@ message SystemInfoResponse {
   int32 message_id = 1;
   int32 firmware_version = 2;
   int32 hardware_version = 3;
+  bool has_power_sensor = 4;
+  bool has_gps = 5;
 }
 
 //MARK: ADC
