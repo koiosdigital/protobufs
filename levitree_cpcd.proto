@@ -85,27 +85,28 @@ message RoutableMessage {
 
     GetAttachedDevices get_attached_devices = 11; //done, response is AttachedDevices
     AttachedDevices attached_devices = 12; //done
+    RequestStateUpdate request_state_update = 21; //done
 
     //adc
-    SetADCSettings set_adc_settings = 13; //done, returns Acknowledge
-    ADCStateUpdate adc_state_update = 14; //done
+    SetADCSettings set_adc_settings = 20; //done, returns Acknowledge
+    ADCStateUpdate adc_state_update = 21; //done
 
     //distance sensor
-    SetDistanceSensorSettings set_distance_sensor_settings = 15; //done, returns Acknowledge
-    DistanceSensorStateUpdate distance_sensor_state_update = 16; //done
+    SetDistanceSensorSettings set_distance_sensor_settings = 30; //done, returns Acknowledge
+    DistanceSensorStateUpdate distance_sensor_state_update = 32; //done
 
     //VFD
-    SetVFDSettings set_vfd_settings = 17; //done, returns Acknowledge
-    VFDStateUpdate vfd_state_update = 18; //done
-    SetVFDDirection set_vfd_direction = 19; //done, returns Acknowledge
-    SetVFDFrequency set_vfd_frequency = 20; //done, returns Acknowledge
+    SetVFDSettings set_vfd_settings = 40; //done, returns Acknowledge
+    VFDStateUpdate vfd_state_update = 42; //done
+    SetVFDDirection set_vfd_direction = 43; //done, returns Acknowledge
+    SetVFDFrequency set_vfd_frequency = 44; //done, returns Acknowledge
 
-    Heartbeat heartbeat = 21; //done
+    Heartbeat heartbeat = 252; //done
 
     //internal
-    GetIdentifiedDevice get_identified_device = 22;
-    IdentifiedDevice identified_device = 23;
-    SetDeviceOutgoingIdentity set_device_outgoing_identity = 24;
+    GetIdentifiedDevice get_identified_device = 253;
+    IdentifiedDevice identified_device = 254;
+    SetDeviceOutgoingIdentity set_device_outgoing_identity = 255;
   }
 }
 
@@ -126,6 +127,10 @@ message GetAttachedDevices {
 }
 
 message DiscoveryPending {
+
+}
+
+message RequestStateUpdate {
 
 }
 
