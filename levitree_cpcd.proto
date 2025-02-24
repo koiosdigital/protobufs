@@ -3,62 +3,12 @@ syntax = "proto3";
 package levitree_cpcd;
 
 enum DeviceType {
-  DEVICE_ADC_8 = 0;
-  DEVICE_ADC_2 = 1;
-  DEVICE_DISTANCE_SENSOR = 3;
-  DEVICE_VFD_FRENIC = 4;
-}
-
-enum PressureSensorRating {
-  PSI_50 = 0;
-  PSI_100 = 1;
-  PSI_150 = 2;
-  PSI_200 = 3;
-  PSI_250 = 4;
-  PSI_300 = 5;
-  PSI_350 = 6;
-  PSI_400 = 7;
-  PSI_450 = 8;
-  PSI_500 = 9;
-}
-
-enum VFDHaltMode {
-  VFD_HALT_MODE_NONE = 0;
-  VFD_HALT_MODE_SOFT = 1;
-  VFD_HALT_MODE_HARD = 2;
-}
-
-enum PressureSensorLocation {
-  INLET_PULP = 0;
-  INLET_WATER = 1;
-  INLET_VISCOSIFIER = 2;
-  OUTLET = 3;
-}
-
-enum ADCPurpose {
-  ADC_GENERIC = 0;
-  PRESSURE_SENSOR = 1;
-  TEMPERATURE_SENSOR = 2;
-  CURRENT_SENSOR = 3;
-  VOLTAGE_SENSOR = 4;
-}
-
-enum DistanceSensorPurpose {
-  DISTANCE_SENSOR_GENERIC = 0;
-  TANK_LEVEL = 1;
-}
-
-enum VFDLocation {
-  VFD_GENERIC = 0;
-  VFD_OUTLET = 1;
-  VFD_AUGER = 2;
-}
-
-enum ADCChannelValueInterpretation {
-  VOLTAGE_V = 0;
-  CURRENT_A = 1;
-  TEMPERATURE_C = 2;
-  PRESSURE_PSI = 3;
+  DEVICE_MOTHERBOARD = 0;
+  DEVICE_ROVER = 1;
+  DEVICE_ADC_8 = 2;
+  DEVICE_ADC_2 = 3;
+  DEVICE_DISTANCE_SENSOR = 4;
+  DEVICE_VFD_FRENIC = 5;
 }
 
 enum DestinationType {
@@ -68,46 +18,55 @@ enum DestinationType {
   DESTINATION_IS_BROADCAST = 3;
 }
 
+enum VFDDriveMode {
+  VFD_DRIVE_MODE_STOP = 0;
+  VFD_DRIVE_MODE_FORWARD = 1;
+  VFD_DRIVE_MODE_REVERSE = 2;
+}
+
+message RoutableMessageDestination {
+  bytes destination_mcu_id = 1;
+  DestinationType destination_type = 2;
+}
+
 message RoutableMessage {
-  oneof destination {
-    bytes destination_mcu_id = 2;
-    DestinationType destination_type = 3;
-  }
+
+  RoutableMessageDestination destination = 1;
+
   oneof message {
     Acknowledge acknowledge = 5; //done
     
     GetSystemInfo get_system_info = 6; //done, response is SystemInfoResponse
     SystemInfoResponse system_info_response = 7; //done
 
-    DiscoverAttachedDevices discover_attached_devices = 8; //done, response is DiscoveryPending
-    DiscoveryPending discovery_pending = 9; //done, sends DiscoveryComplete when done
-    DiscoveryComplete discovery_complete = 10; //done
-
     GetAttachedDevices get_attached_devices = 11; //done, response is AttachedDevices
     AttachedDevices attached_devices = 12; //done
+
+    //all devices
     RequestStateUpdate request_state_update = 13; //done
 
     //adc
-    SetADCSettings set_adc_settings = 20; //done, returns Acknowledge
     ADCStateUpdate adc_state_update = 21; //done
 
     //distance sensor
-    SetDistanceSensorSettings set_distance_sensor_settings = 30; //done, returns Acknowledge
     DistanceSensorStateUpdate distance_sensor_state_update = 32; //done
 
     //VFD
-    SetVFDSettings set_vfd_settings = 40; //done, returns Acknowledge
     VFDStateUpdate vfd_state_update = 42; //done
-    SetVFDDirection set_vfd_direction = 43; //done, returns Acknowledge
+    SetVFDDriveMode set_vfd_drive_mode = 43; //done, returns Acknowledge
     SetVFDFrequency set_vfd_frequency = 44; //done, returns Acknowledge
 
-    Heartbeat heartbeat = 252; //done
+    //GPS
+    RequestGPSStateUpdate request_gps_state_update = 51; //done
+    GPSStateUpdate gps_state_update = 52; //done
 
-    //internal
-    GetIdentifiedDevice get_identified_device = 253;
-    IdentifiedDevice identified_device = 254;
-    SetDeviceOutgoingIdentity set_device_outgoing_identity = 255;
+
+    Heartbeat heartbeat = 252; //done
   }
+}
+
+message Heartbeat {
+
 }
 
 message Acknowledge {
@@ -118,24 +77,25 @@ message GetSystemInfo {
   
 }
 
-message DiscoverAttachedDevices {
-
+//MARK: Discovery
+message AttachedDevice {
+  DeviceType device_type = 1;
+  bytes mcu_id = 2;
+  bytes name = 3;
 }
 
 message GetAttachedDevices {
-
+  
 }
 
-message DiscoveryPending {
-
+message AttachedDevices {
+  repeated AttachedDevice devices = 1;
 }
+
+//end discovery
 
 message RequestStateUpdate {
 
-}
-
-message DiscoveryComplete {
-  int32 device_count = 1;
 }
 
 message SystemInfoResponse {
@@ -147,124 +107,55 @@ message SystemInfoResponse {
 }
 
 //MARK: ADC
-
-message ADCChannelSettings {
-  bool enabled = 1;
-  int32 channel_number = 2;
-  ADCPurpose purpose = 3;
-  optional PressureSensorRating pressure_sensor_rating = 4;
-  optional PressureSensorLocation pressure_sensor_location = 5;
-}
-
-message ADCSettings {
-  bytes name = 1;
-  int32 channels_mask = 2;
-  int32 sample_rate = 3;
-  repeated ADCChannelSettings channel_settings = 4;
-}
-
-message ADC {
-  ADCSettings settings = 2;
-}
-
 message ADCChannelValue {
   int32 channel_number = 1;
-  float value = 2;
-  ADCChannelValueInterpretation interpretation = 3;
+  float volts = 2;
+  float vref = 3;
 }
 
 message ADCStateUpdate {
-  int32 sample_rate = 2;
   repeated ADCChannelValue values = 3;
 }
 
-message SetADCSettings {
-  ADCSettings settings = 2;
-}
-
 //MARK: Distance Sensor
-
-message DistanceSensor {
-  DistanceSensorSettings settings = 2;
-}
-
-message DistanceSensorSettings {
-  bytes name = 1;
-  int32 sample_rate = 2;
-  DistanceSensorPurpose purpose = 3;
-}
-
 message DistanceSensorStateUpdate {
-  int32 sample_rate = 2;
   float distance_cm = 3;
 }
 
-message SetDistanceSensorSettings {
-  DistanceSensorSettings settings = 2;
-}
-
 //MARK: VFD
-
-message SetVFDSettings {
-  VFDSettings settings = 2;
-}
-
-message VFDCalibration {
-  float frequency_hz = 1; //at what frequency
-  float volume_gal = 2; //did how many gallons pass
-  float time_seconds = 3; //in how many seconds
-}
-
-message VFDSettings {
-  bytes name = 1;
-  VFDLocation location = 2;
-  VFDHaltMode halt_mode = 3;
-  repeated VFDCalibration calibrations = 4;
-}
-
-message VFD {
-  VFDSettings settings = 2;
-}
-
-message VFDStateUpdate {
-  float frequency = 2;
-  bool direction = 3;
-  bool stopped = 4;
-  float m3_per_hour = 5;
-  bool is_calibrated = 6;
-}
-
-message AttachedDevice {
-  DeviceType device_type = 1;
-  bytes mcu_id = 2;
-  bytes name = 3;
-}
-
-message GetIdentifiedDevice {
+message VFDHeartbeat {
   
 }
 
-message IdentifiedDevice {
-  DeviceType device_type = 2;
+message VFDStateUpdate {
+  float frequency_hz = 1;
+  float power_w = 2;
+  float current_a = 3;
+  float voltage_v = 4;
+  VFDDriveMode drive_mode = 5;
 }
 
-message SetDeviceOutgoingIdentity {
-  int32 sensenet_channel = 2;
-}
-
-message SetVFDDirection {
-  bool direction = 2; //true = forward, false = reverse
-  bool enabled = 3; //true = enabled, false = disabled
+message SetVFDDriveMode {
+  VFDDriveMode drive_mode = 1;
 }
 
 message SetVFDFrequency {
   float frequency_hz = 2;
 }
 
-message AttachedDevices {
-  repeated AttachedDevice devices = 1;
+//MARK: GPS
+message GPSPosition {
+  float latitude = 1;
+  float longitude = 2;
+  float altitude = 3;
+  int32 sat_count = 4;
+  bool fix_ok = 5;
 }
 
-message Heartbeat {
+message RequestGPSStateUpdate {
+  
+}
 
+message GPSStateUpdate {
+  GPSPosition position = 1;
 }

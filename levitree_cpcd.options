@@ -1,6 +1,2 @@
 levitree_cpcd.RoutableMessage.destination_mcu_id max_size:32 fixed_length:true
-levitree_cpcd.ADCSettings.name max_size:40 fixed_length:true
-levitree_cpcd.DistanceSensorSettings.name max_size:40 fixed_length:true
-levitree_cpcd.VFDSettings.name max_size:40 fixed_length:true
 levitree_cpcd.AttachedDevice.mcu_id max_size:32 fixed_length:true
-levitree_cpcd.AttachedDevice.name max_size:40 fixed_length:true
