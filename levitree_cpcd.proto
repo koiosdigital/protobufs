@@ -11,11 +11,10 @@ enum DeviceType {
   DEVICE_VFD_FRENIC = 5;
 }
 
-enum DestinationType {
-  DESTINATION_MCU_ID = 0;
-  DESTINATION_IS_CPC = 1;
-  DESTINATION_IS_HOST = 2;
-  DESTINATION_IS_BROADCAST = 3;
+enum EndpointType {
+  ENDPOINT_MCU = 0;
+  ENDPOINT_CPC = 1;
+  ENDPOINT_HOST = 2;
 }
 
 enum VFDDriveMode {
@@ -24,15 +23,15 @@ enum VFDDriveMode {
   VFD_DRIVE_MODE_REVERSE = 2;
 }
 
-message RoutableMessageDestination {
-  bytes destination_mcu_id = 1;
-  DestinationType destination_type = 2;
+message Endpoint {
+  bytes mcu_id = 1;
+  EndpointType type = 2;
 }
 
 message RoutableMessage {
 
-  RoutableMessageDestination destination = 1;
-  RoutableMessageDestination source = 2;
+  Endpoint destination = 1;
+  Endpoint source = 2;
 
   oneof message {
     Acknowledge acknowledge = 5; //done
