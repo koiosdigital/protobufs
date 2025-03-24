@@ -60,7 +60,8 @@ message RoutableMessage {
     RequestGPSStateUpdate request_gps_state_update = 51; //done
     GPSStateUpdate gps_state_update = 52; //done
 
-
+    IdentifyActiveDevice identify_active_device = 61; //done
+    SetOutgoingIdentity set_outgoing_identity = 62; //done
     Heartbeat heartbeat = 252; //done
   }
 }
@@ -158,4 +159,13 @@ message RequestGPSStateUpdate {
 
 message GPSStateUpdate {
   GPSPosition position = 1;
+}
+
+message IdentifyActiveDevice {
+  
+}
+
+message SetOutgoingIdentity {
+  int32 channel = 1;
+  bool active = 2;
 }
