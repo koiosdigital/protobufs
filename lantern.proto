@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package lantern;
+
+//MARK: Sockets
+message SocketMessage {
+    oneof message {
+        TouchEvent touch_event = 1; //to server
+        TouchEventResponse touch_event_response = 2; //from server
+
+        SetColor set_color = 3; //from server
+        SetColorResponse set_color_response = 4; //to server
+
+        UploadCoreDump upload_core_dump = 5; //from server
+        CoreDumpResponse core_dump_response = 6; //to server
+    }
+}
+
+message TouchEvent {
+
+}
+
+message TouchEventResponse {
+    bool success = 2;
+}
+
+message SetColor {
+    uint32 red = 1;
+    uint32 green = 2;
+    uint32 blue = 3;
+    uint32 white = 4;
+}
+
+message SetColorResponse {
+    bool success = 2;
+}
+
+//MARK: Core Dump
+message UploadCoreDump {
+    bytes core_dump = 1;
+}
+
+message CoreDumpResponse {
+    bool success = 1;
+}
