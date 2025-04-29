@@ -62,7 +62,7 @@ message RoutableMessage {
     GPSStateUpdate gps_state_update = 52; //done
 
     //Temperature Sensor
-    TempSensorStateUpdate = 71; //done
+    TempSensorStateUpdate temp_sensor_state_update = 71; //done
 
     IdentifyActiveDevice identify_active_device = 61; //done
     SetOutgoingIdentity set_outgoing_identity = 62; //done
