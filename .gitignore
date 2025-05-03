@@ -53,5 +53,6 @@ dkms.conf
 
 *.pb-c.c
 *.pb-c.h
+*.ts
 
 .DS_Store
