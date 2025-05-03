@@ -21,11 +21,25 @@ message TouchEventResponse {
     bool success = 2;
 }
 
+enum LEDEffect {
+    OFF = 0;
+    SOLID = 1;
+    FLASH = 2;
+    BREATHING = 3;
+    CYCLE = 4;
+    RAINBOW = 5;
+}
+
 message SetColor {
     uint32 red = 1;
     uint32 green = 2;
     uint32 blue = 3;
     uint32 white = 4;
+
+    LEDEffect effect = 5;
+    uint32 effect_speed = 6;
+    uint32 effect_brightness = 7;
+    uint32 timeout_seconds = 8;
 }
 
 message SetColorResponse {
