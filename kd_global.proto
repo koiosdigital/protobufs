@@ -7,10 +7,9 @@ message KDGlobalMessage {
         //Requests
         Join join = 1; //to server
         ClaimDevice claim_device = 2; //to server
-        SaveDSParams save_ds_params = 3; //to server
-        UploadCoreDump upload_core_dump = 4; //to server
-        Restart restart = 5; //to server
-        ForceOTA force_ota = 6; //to server
+        UploadCoreDump upload_core_dump = 3; //to server
+        Restart restart = 4; //to server
+        ForceOTA force_ota = 5; //to server
         
         //Responses
         JoinResponse join_response = 200; //from server
@@ -36,10 +35,6 @@ message ClaimDevice {
     string claim_token = 1;
 }
 
-message SaveDSParams {
-    string ds_json = 1;
-}
-
 message UploadCoreDump {
     bytes core_dump = 1;
     string firmware_project = 2;
@@ -63,5 +58,4 @@ message Join {
     string firmware_version = 3;
     string firmware_variant = 4;
     string firmware_project = 5;
-    string ds_json = 6;
 }
