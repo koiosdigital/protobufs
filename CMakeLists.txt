@@ -5,11 +5,17 @@ set(PROTO_C_COMPILER "protoc")
 set(C_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/proto-c")
     
 set(PROTO_SRCS 
-    "${CMAKE_CURRENT_LIST_DIR}/lantern.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/device-api.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/kd_global.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/kd_lantern.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/kd_matrx.proto"
 )
     
 set(pb_csrcs
-    "${C_OUT_PATH}/lantern.pb-c.c"
+    "${C_OUT_PATH}/device-api.pb-c.c"
+    "${C_OUT_PATH}/kd_global.pb-c.c"
+    "${C_OUT_PATH}/kd_lantern.pb-c.c"
+    "${C_OUT_PATH}/kd_matrx.pb-c.c"
 )
     
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)

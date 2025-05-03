@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package kd;
+
+message KDGlobalMessage {
+    oneof message {
+        //Requests
+        Join join = 1; //to server
+        ClaimDevice claim_device = 2; //to server
+        SaveDSParams save_ds_params = 3; //to server
+        UploadCoreDump upload_core_dump = 4; //to server
+        Restart restart = 5; //to server
+        ForceOTA force_ota = 6; //to server
+        
+        //Responses
+        JoinResponse join_response = 200; //from server
+        OKResponse ok_response = 201; //from server
+        ErrorResponse error_response = 202; //from server
+    }
+}
+
+message OKResponse {
+    bool success = 1;
+}
+
+message ErrorResponse {
+    string error_message = 1;
+}
+
+message JoinResponse {
+    bool success = 1;
+    bool needs_claimed = 2;
+}
+
+message ClaimDevice {
+    string claim_token = 1;
+}
+
+message SaveDSParams {
+    string ds_json = 1;
+}
+
+message UploadCoreDump {
+    bytes core_dump = 1;
+    string firmware_project = 2;
+    string firmware_version = 3;
+    string firmware_variant = 4;
+}
+
+message Restart {
+
+}
+
+message ForceOTA {
+    string firmware_project = 1;
+    string firmware_version = 2;
+    string firmware_variant = 3;
+}
+
+message Join {
+    string device_id = 1;
+    string device_type = 2;
+    string firmware_version = 3;
+    string firmware_variant = 4;
+    string firmware_project = 5;
+    string ds_json = 6;
+}

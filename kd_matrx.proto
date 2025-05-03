@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package kd;
+
+message KDMatrxMessage {
+    oneof message {
+        RequestSchedule request_schedule = 1; //to server
+        ScheduleResponse schedule_response = 2; //from server
+        RequestRender request_render = 3; //to server
+        RenderResponse render_response = 4; //from server
+
+        //commands
+        PinScheduleItem pin_schedule_item = 8; //bidirectional
+        SkipScheduleItem skip_schedule_item = 9; //bidirectional
+    }
+}
+
+//MARK: Schedule
+message RequestSchedule {
+
+}
+
+message ScheduleItem {
+    bytes uuid = 1;
+    uint32 display_time = 3;
+    bool pinned = 4;
+    bool skipped_by_user = 5;
+    bool skipped_by_server = 6;
+}
+
+message ScheduleResponse {
+    repeated ScheduleItem schedule_items = 1;
+}
+
+//MARK: Render
+message RequestRender {
+    bytes uuid = 1;
+}
+
+message RenderResponse {
+    bytes uuid = 1;
+    bytes sprite_data = 3;
+    bool render_error = 5;
+}
+
+message PinScheduleItem {
+    bytes schedule_item_uuid = 1;
+}
+
+message SkipScheduleItem {
+    bytes schedule_item_uuid = 1;
+}
