@@ -13,8 +13,7 @@ enum DeviceType {
 
 enum EndpointType {
   ENDPOINT_MCU = 0;
-  ENDPOINT_CPC = 1;
-  ENDPOINT_HOST = 2;
+  ENDPOINT_HOST = 1;
 }
 
 enum VFDDriveMode {
@@ -82,7 +81,6 @@ message GetSystemInfo {
 message AttachedDevice {
   DeviceType device_type = 1;
   bytes mcu_id = 2;
-  bytes name = 3;
 }
 
 message GetAttachedDevices {
