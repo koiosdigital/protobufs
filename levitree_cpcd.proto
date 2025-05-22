@@ -44,21 +44,15 @@ message RoutableMessage {
 
     //all devices
     RequestStateUpdate request_state_update = 13; //done
+    StateUpdate state_update = 14; //done
 
-    //adc
-    ADCStateUpdate adc_state_update = 21; //done
+    //GPS, device specific requests
+    RequestGPSStateUpdate request_gps_state_update = 15; //done
+    RequestINAPowerStateUpdate request_inapower_state_update = 16; //done
 
-    //distance sensor
-    DistanceSensorStateUpdate distance_sensor_state_update = 32; //done
-
-    //VFD
-    VFDStateUpdate vfd_state_update = 42; //done
     SetVFDDriveMode set_vfd_drive_mode = 43; //done, returns Acknowledge
     SetVFDFrequency set_vfd_frequency = 44; //done, returns Acknowledge
-
-    //GPS
-    RequestGPSStateUpdate request_gps_state_update = 51; //done
-    GPSStateUpdate gps_state_update = 52; //done
+    SetVFDFailSafe set_vfd_failsafe = 45; //done, returns Acknowledge
 
     //Temperature Sensor
     TempSensorStateUpdate temp_sensor_state_update = 71; //done
@@ -66,6 +60,17 @@ message RoutableMessage {
     IdentifyActiveDevice identify_active_device = 61; //done
     SetOutgoingIdentity set_outgoing_identity = 62; //done
     Heartbeat heartbeat = 252; //done
+  }
+}
+
+message StateUpdate {
+  oneof message {
+    ADCStateUpdate adc_state_update = 1; //done
+    DistanceSensorStateUpdate distance_sensor_state_update = 2; //done
+    VFDStateUpdate vfd_state_update = 3; //done
+    TempSensorStateUpdate temp_sensor_state_update = 4; //done
+    GPSStateUpdate gps_state_update = 5; //done
+    INAPowerStateUpdate ina_power_state_update = 6; //done
   }
 }
 
@@ -112,8 +117,8 @@ message SystemInfoResponse {
 //MARK: ADC
 message ADCChannelValue {
   int32 channel_number = 1;
-  float volts = 2;
-  float vref = 3;
+  float volts_v = 2;
+  float vref_v = 3;
 }
 
 message ADCStateUpdate {
@@ -126,8 +131,14 @@ message DistanceSensorStateUpdate {
 }
 
 //MARK: VFD
-message VFDHeartbeat {
-  
+enum VFDFailSafeMode {
+  VFD_FAILSAFE_MODE_RAMP_DOWN = 0;
+  VFD_FAILSAFE_MODE_E_STOP = 1;
+  VFD_FAILSAFE_MODE_NONE = 2;
+}
+
+message SetVFDFailSafe {
+  VFDFailSafeMode mode = 1;
 }
 
 message VFDStateUpdate {
@@ -143,7 +154,7 @@ message SetVFDDriveMode {
 }
 
 message SetVFDFrequency {
-  float frequency_hz = 2;
+  float frequency_hz = 1;
 }
 
 //MARK: Temperature Sensor
@@ -164,8 +175,18 @@ message RequestGPSStateUpdate {
   
 }
 
+message RequestINAPowerStateUpdate {
+  
+}
+
 message GPSStateUpdate {
   GPSPosition position = 1;
+}
+
+message INAPowerStateUpdate {
+  float voltage_v = 1;
+  float current_a = 2;
+  float power_w = 3;
 }
 
 message IdentifyActiveDevice {

@@ -1,7 +1,0 @@
-levimesh.DiscoveryBroadcast.mcu_serial max_size:16 fixed_length:true
-levimesh.ModbusReadHoldingRegistersResponse.data max_count:40
-levimesh.ModbusWriteRegistersRequest.data max_count:40
-levimesh.ModbusReadInputRegistersResponse.data max_count:40
-levimesh.ModbusWriteCoilsRequest.data max_count:40
-levimesh.ModbusReadCoilsResponse.data max_count:40
-levimesh.ModbusReadDiscreteInputsResponse.data max_count:40
