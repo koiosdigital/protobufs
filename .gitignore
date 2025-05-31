@@ -1,2 +1,4 @@
 src
 src/**
+*.pb-c.c
+*.pb-c.h
