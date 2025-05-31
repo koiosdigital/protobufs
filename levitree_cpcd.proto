@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package levitree_cpcd;
+package levitree;
 
 enum DeviceType {
   DEVICE_MOTHERBOARD = 0;
@@ -99,7 +99,6 @@ message GetAttachedDevices {
 message AttachedDevices {
   repeated AttachedDevice devices = 1;
 }
-
 //end discovery
 
 message RequestStateUpdate {
@@ -107,11 +106,8 @@ message RequestStateUpdate {
 }
 
 message SystemInfoResponse {
-  int32 message_id = 1;
-  int32 firmware_version = 2;
-  int32 hardware_version = 3;
-  bool has_power_sensor = 4;
-  bool has_gps = 5;
+  int32 firmware_version = 1;
+  int32 hardware_version = 2;
 }
 
 //MARK: ADC
