@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package levitree;
+package levitree_cpcd;
 
 enum DeviceType {
   DEVICE_MOTHERBOARD = 0;
