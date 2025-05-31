@@ -195,6 +195,7 @@ message IdentifyActiveDevice {
 message ActiveDeviceResponse {
   bytes mcu_id = 1;
   DeviceType device_type = 2;
+  uint32 channels = 3; //number of channels available for this device
 }
 
 message SetOutgoingIdentity {
