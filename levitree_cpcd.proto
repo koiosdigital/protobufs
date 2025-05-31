@@ -57,8 +57,11 @@ message RoutableMessage {
     //Temperature Sensor
     TempSensorStateUpdate temp_sensor_state_update = 71; //done
 
+    //Discovery
     IdentifyActiveDevice identify_active_device = 61; //done
-    SetOutgoingIdentity set_outgoing_identity = 62; //done
+    ActiveDeviceResponse active_device_response = 62; //done
+    SetOutgoingIdentity set_outgoing_identity = 63; //done
+
     Heartbeat heartbeat = 252; //done
   }
 }
@@ -86,7 +89,7 @@ message GetSystemInfo {
   
 }
 
-//MARK: Discovery
+//MARK: Host -> MCU Discovery
 message AttachedDevice {
   DeviceType device_type = 1;
   bytes mcu_id = 2;
@@ -99,7 +102,6 @@ message GetAttachedDevices {
 message AttachedDevices {
   repeated AttachedDevice devices = 1;
 }
-//end discovery
 
 message RequestStateUpdate {
 
@@ -185,8 +187,14 @@ message INAPowerStateUpdate {
   float power_w = 3;
 }
 
+//MARK: MCU -> Device Discovery
 message IdentifyActiveDevice {
   
+}
+
+message ActiveDeviceResponse {
+  bytes mcu_id = 1;
+  DeviceType device_type = 2;
 }
 
 message SetOutgoingIdentity {
