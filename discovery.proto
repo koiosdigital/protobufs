@@ -6,15 +6,15 @@ import "enums.proto";
 
 message DiscoveryCommandRequest {
   oneof message {
-    IdentifyActiveDeviceRequest identify_active_device_req = 1; //done
-    DeviceInfo identify_active_device_res = 2; //done
-    SetChannelIdentityRequest set_channel_identity_req = 3; //done
+    IdentifyActiveDeviceRequest identify_active_device_req = 1;
+    SetChannelIdentityRequest set_channel_identity_req = 3;
     AttachedDevicesRequest attached_devices_req = 4;
   }
 }
 
 message DiscoveryCommandResponse {
   AttachedDevicesResponse attached_devices_res = 1;
+  DeviceInfo identify_active_device_res = 2;
 }
 
 message AttachedDevicesRequest {
