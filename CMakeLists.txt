@@ -30,6 +30,6 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
             VERBATIM)
 endif()
     
-idf_component_register(SRCS "${pb_csrcs}"
+idf_component_register(SRCS "levitree.pb-c.c" "device_adc.pb-c.c" "${pb_csrcs}"
                         INCLUDE_DIRS "proto-c"
-                        REQUIRES protobuf-c)
+                        REQUIRES protobuf-c)))

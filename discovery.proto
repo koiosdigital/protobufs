@@ -13,8 +13,10 @@ message DiscoveryCommandRequest {
 }
 
 message DiscoveryCommandResponse {
-  AttachedDevicesResponse attached_devices_res = 1;
-  DeviceInfo identify_active_device_res = 2;
+  oneof message {
+    AttachedDevicesResponse attached_devices_res = 1;
+    DeviceInfo identify_active_device_res = 2;
+  }
 }
 
 message AttachedDevicesRequest {
