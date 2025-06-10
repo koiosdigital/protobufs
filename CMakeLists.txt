@@ -5,11 +5,22 @@ set(PROTO_C_COMPILER "protoc")
 set(C_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/proto-c")
     
 set(PROTO_SRCS 
-    "${CMAKE_CURRENT_LIST_DIR}/levitree_cpcd.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/levitree.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/device_adc.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/device_vfd.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/discovery.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/heartbeat.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/enums.proto"
 )
     
 set(pb_csrcs
-    "${C_OUT_PATH}/levitree_cpcd.pb-c.c"
+    "${C_OUT_PATH}/levitree.pb-c.c"
+    "${C_OUT_PATH}/device_adc.pb-c.c"
+    "${C_OUT_PATH}/device_vfd.pb-c.c"
+    "${C_OUT_PATH}/discovery.pb-c.c"
+    "${C_OUT_PATH}/heartbeat.pb-c.c"
+    "${C_OUT_PATH}/enums.pb-c.c"
+
 )
     
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)

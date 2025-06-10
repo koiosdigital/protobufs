@@ -39,6 +39,7 @@ message RoutableMessage {
 }
 
 message GPSState {
+  bool has_gps = 1; // Indicates if GPS data is available
   double latitude = 2; // Latitude in degrees
   double longitude = 3; // Longitude in degrees
   float altitude = 4; // Altitude in meters
@@ -56,7 +57,7 @@ message SystemInfoResponse {
   int32 hardware_version = 2;
   string hardware_codename = 3; // e.g. "levitree_v1"
   string software_codename = 4; // e.g. "levitree_software_v1"
-  optional GPSState gps_state = 5; // Optional GPS state
+  GPSState gps_state = 5; // Optional GPS state
 }
 
 message StateUpdateRequest {
