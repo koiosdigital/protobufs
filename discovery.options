@@ -1,0 +1,2 @@
+levitree.AttachedDevicesResponse.devices max_count:32;
+levitree.DeviceInfo.mcu_id max_size:16; fixed_length:true;
