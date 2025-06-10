@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package levitree;
+
+import "device_adc.proto";
+import "device_vfd.proto";
+import "discovery.proto";
+import "heartbeat.proto";
+
+message Endpoint {
+  bytes mcu_id = 1;
+}
+
+message RoutableMessage {
+  Endpoint source = 1;
+  Endpoint destination = 2;
+
+  oneof payload {
+    SystemInfoRequest system_info_req = 3;
+    SystemInfoResponse system_info_res = 4;
+
+    DiscoveryCommandRequest discovery_command_req = 10;
+    DiscoveryCommandResponse discovery_command_res = 11;
+
+    StateUpdateRequest state_update_req = 15;
+    StateUpdateResponse state_update_res = 16;
+
+    VFDCommandRequest vfd_command_req = 17;
+    VFDCommandResponse vfd_command_res = 18;
+
+    ADCCommandRequest adc_command_req = 19;
+    ADCCommandResponse adc_command_res = 20;
+
+    HeartbeatRequest heartbeat = 251;
+    HeartbeatResponse heartbeat_response = 252;
+    AcknowledgeResponse acknowledge_response = 253;
+    ErrorResponse error_response = 254;
+  }
+}
+
+message GPSState {
+  double latitude = 2; // Latitude in degrees
+  double longitude = 3; // Longitude in degrees
+  float altitude = 4; // Altitude in meters
+  float speed = 5; // Speed in m/s
+  float heading = 6; // Heading in degrees
+  int32 satellites = 7; // Number of satellites used for the fix
+}
+
+message SystemInfoRequest {
+
+}
+
+message SystemInfoResponse {
+  int32 firmware_version = 1;
+  int32 hardware_version = 2;
+  string hardware_codename = 3; // e.g. "levitree_v1"
+  string software_codename = 4; // e.g. "levitree_software_v1"
+  optional GPSState gps_state = 5; // Optional GPS state
+}
+
+message StateUpdateRequest {
+  
+}
+
+message StateUpdateResponse {
+  oneof message {
+    ADCState adc_state = 1; //done
+    VFDState vfd_state = 2; //done
+  }
+}
+
+message AcknowledgeResponse {
+
+}
+
+message ErrorResponse {
+  string error_message = 1; // Description of the error
+}
+
+//MARK: VFD

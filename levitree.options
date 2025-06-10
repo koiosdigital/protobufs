@@ -1,0 +1,11 @@
+levitree.Endpoint.mcu_id max_size:16; fixed_length:true;
+
+levitree.SystemInfoResponse.hardware_codename max_size:32; fixed_length:true;
+levitree.SystemInfoResponse.software_codename max_size:32; fixed_length:true;
+
+levitree.ErrorResponse.error_message max_size:32; fixed_length:true;
+
+levitree.AttachedDevicesResponse.devices max_count:32;
+levitree.DeviceInfo.mcu_id max_size:16; fixed_length:true;
+
+levitree.ADCState.values max_count:8;

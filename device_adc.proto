@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package levitree;
+
+message ADCCommandRequest {
+
+}
+
+message ADCCommandResponse {
+  
+}
+
+message ADCChannelValue {
+  int32 channel_number = 1;
+  int32 adc_value = 2;
+}
+
+message ADCState {
+  repeated ADCChannelValue values = 3;
+}

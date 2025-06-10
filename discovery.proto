@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package levitree;
+
+import "enums.proto";
+
+message DiscoveryCommandRequest {
+  oneof message {
+    IdentifyActiveDeviceRequest identify_active_device_req = 1; //done
+    DeviceInfo identify_active_device_res = 2; //done
+    SetChannelIdentityRequest set_channel_identity_req = 3; //done
+    AttachedDevicesRequest attached_devices_req = 4;
+  }
+}
+
+message DiscoveryCommandResponse {
+  AttachedDevicesResponse attached_devices_res = 1;
+}
+
+message AttachedDevicesRequest {
+  
+}
+
+message AttachedDevicesResponse {
+  repeated DeviceInfo devices = 1;
+}
+
+message IdentifyActiveDeviceRequest {
+  
+}
+
+message DeviceInfo {
+  bytes mcu_id = 1;
+  DeviceType device_type = 2;
+  uint32 channels = 3; //number of channels available for this device
+}
+
+message SetChannelIdentityRequest {
+  int32 channel = 1;
+  bool active = 2;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package levitree;
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  DEVICE_TYPE_BRAIN = 1;
+  DEVICE_TYPE_HUB = 2;
+  DEVICE_TYPE_ADC_2 = 3;
+  DEVICE_TYPE_ADC_4 = 4;
+  DEVICE_TYPE_ADC_8 = 5;
+  DEVICE_TYPE_VFD = 6;
+}

@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package levitree;
+
+enum VFDDriveMode {
+  VFD_DRIVE_MODE_UNSPECIFIED = 0;
+  VFD_DRIVE_MODE_STOP = 1;
+  VFD_DRIVE_MODE_FORWARD = 2;
+  VFD_DRIVE_MODE_REVERSE = 3;
+}
+
+enum VFDFailSafeMode {
+  VFD_FAIL_SAFE_MODE_UNSPECIFIED = 0;
+  VFD_FAIL_SAFE_MODE_RAMP_DOWN = 1;
+  VFD_FAIL_SAFE_MODE_E_STOP = 2;
+  VFD_FAIL_SAFE_MODE_NONE = 3;
+}
+
+
+message VFDCommandRequest {
+  oneof command {
+    SetFailSafeRequest set_fail_safe = 1;
+    SetDriveModeRequest set_drive_mode = 2;
+    SetFrequencyRequest set_frequency = 3;
+  }
+}
+
+message VFDCommandResponse {
+  
+}
+
+
+message VFDState {
+  float frequency_hz = 1;
+  float power_w = 2;
+  float current_a = 3;
+  float voltage_v = 4;
+  VFDDriveMode drive_mode = 5;
+  VFDFailSafeMode fail_safe_mode = 6;
+}
+
+message SetFailSafeRequest {
+  VFDFailSafeMode mode = 1;
+}
+
+message SetDriveModeRequest {
+  VFDDriveMode drive_mode = 1;
+}
+
+message SetFrequencyRequest {
+  float frequency_hz = 1;
+}
