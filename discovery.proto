@@ -32,9 +32,8 @@ message IdentifyActiveDeviceRequest {
 }
 
 message DeviceInfo {
-  bytes mcu_id = 1;
-  DeviceType device_type = 2;
-  uint32 channels = 3; //number of channels available for this device
+  DeviceType device_type = 1;
+  uint32 channels = 2; //number of channels available for this device
 }
 
 message SetChannelIdentityRequest {
