@@ -22,6 +22,7 @@ message VFDCommandRequest {
     SetFailSafeRequest set_fail_safe = 1;
     SetDriveModeRequest set_drive_mode = 2;
     SetFrequencyRequest set_frequency = 3;
+    ClearAlarmRequest clear_alarm = 4;
   }
 }
 
@@ -37,6 +38,7 @@ message VFDState {
   float voltage_v = 4;
   VFDDriveMode drive_mode = 5;
   VFDFailSafeMode fail_safe_mode = 6;
+  int32 alarm_code = 7;
 }
 
 message SetFailSafeRequest {
@@ -49,4 +51,8 @@ message SetDriveModeRequest {
 
 message SetFrequencyRequest {
   float frequency_hz = 1;
+}
+
+message ClearAlarmRequest {
+  // This message can be empty, as it just indicates a request to clear alarms.
 }

@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "*.star": "python",
+    "enums.pb-c.h": "c"
+  }
+}
