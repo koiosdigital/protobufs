@@ -34,7 +34,7 @@ set(npb_csrcs
     
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     add_custom_command(OUTPUT ${pb_csrcs}
-            COMMAND ${PROTO_C_COMPILER} -I ${CMAKE_CURRENT_LIST_DIR} --nanopb_out=${NANOC_OUT_PATH} ${PROTO_SRCS}
+            COMMAND ${PROTO_C_COMPILER} --nanopb_out=${NANOC_OUT_PATH} ./*.proto
             DEPENDS ${PROTO_SRCS}
             VERBATIM)
 endif()
