@@ -50,5 +50,10 @@ set(inc_dirs
     "${CMAKE_CURRENT_LIST_DIR}/proto-c"
     "${CMAKE_CURRENT_LIST_DIR}/nanopb"
 )
+
+set(srcs
+    "${pb_csrcs}"
+    "${npb_csrcs}"
+)
     
-idf_component_register(SRCS "${pb_csrcs} ${npb_csrcs}" INCLUDE_DIRS "${inc_dirs}" REQUIRES protobuf-c)
+idf_component_register(SRCS "${srcs}" INCLUDE_DIRS "${inc_dirs}" REQUIRES protobuf-c)
