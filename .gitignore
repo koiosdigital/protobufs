@@ -2,5 +2,3 @@ src
 src/**
 *.pb-c.c
 *.pb-c.h
-*.pb.c
-*.pb.h

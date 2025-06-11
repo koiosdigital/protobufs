@@ -31,16 +31,9 @@ set(npb_csrcs
     "${NANOC_OUT_PATH}/heartbeat.pb.c"
     "${NANOC_OUT_PATH}/enums.pb.c"
 )
-    
-if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    add_custom_command(OUTPUT ${pb_csrcs}
-            COMMAND ${PROTO_C_COMPILER} --nanopb_out=${NANOC_OUT_PATH} ./*.proto
-            DEPENDS ${PROTO_SRCS}
-            VERBATIM)
-endif()
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    add_custom_command(OUTPUT ${npb_csrcs}
+    add_custom_command(OUTPUT ${pb_csrcs}
             COMMAND ${PROTO_C_COMPILER} -I ${CMAKE_CURRENT_LIST_DIR} --c_out=${C_OUT_PATH} ${PROTO_SRCS}
             DEPENDS ${PROTO_SRCS}
             VERBATIM)
