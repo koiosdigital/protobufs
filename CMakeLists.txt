@@ -30,6 +30,9 @@ set(npb_csrcs
     "${NANOC_OUT_PATH}/discovery.pb.c"
     "${NANOC_OUT_PATH}/heartbeat.pb.c"
     "${NANOC_OUT_PATH}/enums.pb.c"
+    "${NANOC_OUT_PATH}/pb_common.c"
+    "${NANOC_OUT_PATH}/pb_decode.c"
+    "${NANOC_OUT_PATH}/pb_encode.c"
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
