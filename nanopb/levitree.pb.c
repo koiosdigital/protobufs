@@ -12,6 +12,9 @@ PB_BIND(levitree_Endpoint, levitree_Endpoint, AUTO)
 PB_BIND(levitree_RoutableMessage, levitree_RoutableMessage, 2)
 
 
+PB_BIND(levitree_RoutingDeviceState, levitree_RoutingDeviceState, AUTO)
+
+
 PB_BIND(levitree_GPSState, levitree_GPSState, AUTO)
 
 

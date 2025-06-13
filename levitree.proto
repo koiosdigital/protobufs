@@ -39,6 +39,10 @@ message RoutableMessage {
   }
 }
 
+message RoutingDeviceState {
+  GPSState gps_state = 1; // GPS state information
+}
+
 message GPSState {
   bool has_gps = 1; // Indicates if GPS data is available
   double latitude = 2; // Latitude in degrees
@@ -58,8 +62,7 @@ message SystemInfoResponse {
   int32 hardware_version = 2;
   string hardware_codename = 3; // e.g. "levitree_v1"
   string software_codename = 4; // e.g. "levitree_software_v1"
-  GPSState gps_state = 5; // Optional GPS state
-  DeviceType device_type = 6; // Type of the device
+  DeviceType device_type = 5; // Type of the device
 }
 
 message StateUpdateRequest {
@@ -70,6 +73,7 @@ message StateUpdateResponse {
   oneof message {
     ADCState adc_state = 1; //done
     VFDState vfd_state = 2; //done
+    RoutingDeviceState routing_device_state = 3; //done
   }
 }
 

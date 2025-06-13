@@ -29,6 +29,11 @@ typedef struct _levitree_GPSState {
     int32_t satellites; /* Number of satellites used for the fix */
 } levitree_GPSState;
 
+typedef struct _levitree_RoutingDeviceState {
+    bool has_gps_state;
+    levitree_GPSState gps_state; /* GPS state information */
+} levitree_RoutingDeviceState;
+
 typedef struct _levitree_SystemInfoRequest {
     char dummy_field;
 } levitree_SystemInfoRequest;
@@ -38,8 +43,6 @@ typedef struct _levitree_SystemInfoResponse {
     int32_t hardware_version;
     char hardware_codename[32]; /* e.g. "levitree_v1" */
     char software_codename[32]; /* e.g. "levitree_software_v1" */
-    bool has_gps_state;
-    levitree_GPSState gps_state; /* Optional GPS state */
     levitree_DeviceType device_type; /* Type of the device */
 } levitree_SystemInfoResponse;
 
@@ -52,6 +55,7 @@ typedef struct _levitree_StateUpdateResponse {
     union {
         levitree_ADCState adc_state; /* done */
         levitree_VFDState vfd_state; /* done */
+        levitree_RoutingDeviceState routing_device_state; /* done */
     } message;
 } levitree_StateUpdateResponse;
 
@@ -95,18 +99,20 @@ extern "C" {
 /* Initializer values for message structs */
 #define levitree_Endpoint_init_default           {{0}}
 #define levitree_RoutableMessage_init_default    {false, levitree_Endpoint_init_default, false, levitree_Endpoint_init_default, 0, {levitree_SystemInfoRequest_init_default}}
+#define levitree_RoutingDeviceState_init_default {false, levitree_GPSState_init_default}
 #define levitree_GPSState_init_default           {0, 0, 0, 0, 0, 0, 0}
 #define levitree_SystemInfoRequest_init_default  {0}
-#define levitree_SystemInfoResponse_init_default {0, 0, "", "", false, levitree_GPSState_init_default, _levitree_DeviceType_MIN}
+#define levitree_SystemInfoResponse_init_default {0, 0, "", "", _levitree_DeviceType_MIN}
 #define levitree_StateUpdateRequest_init_default {0}
 #define levitree_StateUpdateResponse_init_default {0, {levitree_ADCState_init_default}}
 #define levitree_AcknowledgeResponse_init_default {0}
 #define levitree_ErrorResponse_init_default      {""}
 #define levitree_Endpoint_init_zero              {{0}}
 #define levitree_RoutableMessage_init_zero       {false, levitree_Endpoint_init_zero, false, levitree_Endpoint_init_zero, 0, {levitree_SystemInfoRequest_init_zero}}
+#define levitree_RoutingDeviceState_init_zero    {false, levitree_GPSState_init_zero}
 #define levitree_GPSState_init_zero              {0, 0, 0, 0, 0, 0, 0}
 #define levitree_SystemInfoRequest_init_zero     {0}
-#define levitree_SystemInfoResponse_init_zero    {0, 0, "", "", false, levitree_GPSState_init_zero, _levitree_DeviceType_MIN}
+#define levitree_SystemInfoResponse_init_zero    {0, 0, "", "", _levitree_DeviceType_MIN}
 #define levitree_StateUpdateRequest_init_zero    {0}
 #define levitree_StateUpdateResponse_init_zero   {0, {levitree_ADCState_init_zero}}
 #define levitree_AcknowledgeResponse_init_zero   {0}
@@ -121,14 +127,15 @@ extern "C" {
 #define levitree_GPSState_speed_tag              5
 #define levitree_GPSState_heading_tag            6
 #define levitree_GPSState_satellites_tag         7
+#define levitree_RoutingDeviceState_gps_state_tag 1
 #define levitree_SystemInfoResponse_firmware_version_tag 1
 #define levitree_SystemInfoResponse_hardware_version_tag 2
 #define levitree_SystemInfoResponse_hardware_codename_tag 3
 #define levitree_SystemInfoResponse_software_codename_tag 4
-#define levitree_SystemInfoResponse_gps_state_tag 5
-#define levitree_SystemInfoResponse_device_type_tag 6
+#define levitree_SystemInfoResponse_device_type_tag 5
 #define levitree_StateUpdateResponse_adc_state_tag 1
 #define levitree_StateUpdateResponse_vfd_state_tag 2
+#define levitree_StateUpdateResponse_routing_device_state_tag 3
 #define levitree_ErrorResponse_error_message_tag 1
 #define levitree_RoutableMessage_source_tag      1
 #define levitree_RoutableMessage_destination_tag 2
@@ -189,6 +196,12 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_response,payload.error_respons
 #define levitree_RoutableMessage_payload_acknowledge_response_MSGTYPE levitree_AcknowledgeResponse
 #define levitree_RoutableMessage_payload_error_response_MSGTYPE levitree_ErrorResponse
 
+#define levitree_RoutingDeviceState_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  gps_state,         1)
+#define levitree_RoutingDeviceState_CALLBACK NULL
+#define levitree_RoutingDeviceState_DEFAULT NULL
+#define levitree_RoutingDeviceState_gps_state_MSGTYPE levitree_GPSState
+
 #define levitree_GPSState_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     has_gps,           1) \
 X(a, STATIC,   SINGULAR, DOUBLE,   latitude,          2) \
@@ -210,11 +223,9 @@ X(a, STATIC,   SINGULAR, INT32,    firmware_version,   1) \
 X(a, STATIC,   SINGULAR, INT32,    hardware_version,   2) \
 X(a, STATIC,   SINGULAR, STRING,   hardware_codename,   3) \
 X(a, STATIC,   SINGULAR, STRING,   software_codename,   4) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  gps_state,         5) \
-X(a, STATIC,   SINGULAR, UENUM,    device_type,       6)
+X(a, STATIC,   SINGULAR, UENUM,    device_type,       5)
 #define levitree_SystemInfoResponse_CALLBACK NULL
 #define levitree_SystemInfoResponse_DEFAULT NULL
-#define levitree_SystemInfoResponse_gps_state_MSGTYPE levitree_GPSState
 
 #define levitree_StateUpdateRequest_FIELDLIST(X, a) \
 
@@ -223,11 +234,13 @@ X(a, STATIC,   SINGULAR, UENUM,    device_type,       6)
 
 #define levitree_StateUpdateResponse_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (message,adc_state,message.adc_state),   1) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (message,vfd_state,message.vfd_state),   2)
+X(a, STATIC,   ONEOF,    MESSAGE,  (message,vfd_state,message.vfd_state),   2) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (message,routing_device_state,message.routing_device_state),   3)
 #define levitree_StateUpdateResponse_CALLBACK NULL
 #define levitree_StateUpdateResponse_DEFAULT NULL
 #define levitree_StateUpdateResponse_message_adc_state_MSGTYPE levitree_ADCState
 #define levitree_StateUpdateResponse_message_vfd_state_MSGTYPE levitree_VFDState
+#define levitree_StateUpdateResponse_message_routing_device_state_MSGTYPE levitree_RoutingDeviceState
 
 #define levitree_AcknowledgeResponse_FIELDLIST(X, a) \
 
@@ -241,6 +254,7 @@ X(a, STATIC,   SINGULAR, STRING,   error_message,     1)
 
 extern const pb_msgdesc_t levitree_Endpoint_msg;
 extern const pb_msgdesc_t levitree_RoutableMessage_msg;
+extern const pb_msgdesc_t levitree_RoutingDeviceState_msg;
 extern const pb_msgdesc_t levitree_GPSState_msg;
 extern const pb_msgdesc_t levitree_SystemInfoRequest_msg;
 extern const pb_msgdesc_t levitree_SystemInfoResponse_msg;
@@ -252,6 +266,7 @@ extern const pb_msgdesc_t levitree_ErrorResponse_msg;
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define levitree_Endpoint_fields &levitree_Endpoint_msg
 #define levitree_RoutableMessage_fields &levitree_RoutableMessage_msg
+#define levitree_RoutingDeviceState_fields &levitree_RoutingDeviceState_msg
 #define levitree_GPSState_fields &levitree_GPSState_msg
 #define levitree_SystemInfoRequest_fields &levitree_SystemInfoRequest_msg
 #define levitree_SystemInfoResponse_fields &levitree_SystemInfoResponse_msg
@@ -267,10 +282,11 @@ extern const pb_msgdesc_t levitree_ErrorResponse_msg;
 #define levitree_ErrorResponse_size              33
 #define levitree_GPSState_size                   46
 #define levitree_RoutableMessage_size            942
+#define levitree_RoutingDeviceState_size         48
 #define levitree_StateUpdateRequest_size         0
 #define levitree_StateUpdateResponse_size        195
 #define levitree_SystemInfoRequest_size          0
-#define levitree_SystemInfoResponse_size         138
+#define levitree_SystemInfoResponse_size         90
 
 #ifdef __cplusplus
 } /* extern "C" */
