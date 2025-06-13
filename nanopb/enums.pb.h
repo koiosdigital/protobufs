@@ -12,8 +12,8 @@
 /* Enum definitions */
 typedef enum _levitree_DeviceType {
     levitree_DeviceType_DEVICE_TYPE_UNSPECIFIED = 0,
-    levitree_DeviceType_DEVICE_TYPE_BRAIN = 1,
-    levitree_DeviceType_DEVICE_TYPE_HUB = 2,
+    levitree_DeviceType_DEVICE_TYPE_HUB = 1,
+    levitree_DeviceType_DEVICE_TYPE_NODE = 2,
     levitree_DeviceType_DEVICE_TYPE_ADC_2 = 3,
     levitree_DeviceType_DEVICE_TYPE_ADC_4 = 4,
     levitree_DeviceType_DEVICE_TYPE_ADC_8 = 5,
