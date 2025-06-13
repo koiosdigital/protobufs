@@ -5,6 +5,7 @@ package levitree;
 import "device_adc.proto";
 import "device_vfd.proto";
 import "discovery.proto";
+import "enums.proto";
 import "heartbeat.proto";
 
 message Endpoint {
@@ -58,6 +59,7 @@ message SystemInfoResponse {
   string hardware_codename = 3; // e.g. "levitree_v1"
   string software_codename = 4; // e.g. "levitree_software_v1"
   GPSState gps_state = 5; // Optional GPS state
+  DeviceType device_type = 6; // Type of the device
 }
 
 message StateUpdateRequest {

@@ -7,6 +7,7 @@
 #include "device_adc.pb.h"
 #include "device_vfd.pb.h"
 #include "discovery.pb.h"
+#include "enums.pb.h"
 #include "heartbeat.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
@@ -39,6 +40,7 @@ typedef struct _levitree_SystemInfoResponse {
     char software_codename[32]; /* e.g. "levitree_software_v1" */
     bool has_gps_state;
     levitree_GPSState gps_state; /* Optional GPS state */
+    levitree_DeviceType device_type; /* Type of the device */
 } levitree_SystemInfoResponse;
 
 typedef struct _levitree_StateUpdateRequest {
@@ -95,7 +97,7 @@ extern "C" {
 #define levitree_RoutableMessage_init_default    {false, levitree_Endpoint_init_default, false, levitree_Endpoint_init_default, 0, {levitree_SystemInfoRequest_init_default}}
 #define levitree_GPSState_init_default           {0, 0, 0, 0, 0, 0, 0}
 #define levitree_SystemInfoRequest_init_default  {0}
-#define levitree_SystemInfoResponse_init_default {0, 0, "", "", false, levitree_GPSState_init_default}
+#define levitree_SystemInfoResponse_init_default {0, 0, "", "", false, levitree_GPSState_init_default, _levitree_DeviceType_MIN}
 #define levitree_StateUpdateRequest_init_default {0}
 #define levitree_StateUpdateResponse_init_default {0, {levitree_ADCState_init_default}}
 #define levitree_AcknowledgeResponse_init_default {0}
@@ -104,7 +106,7 @@ extern "C" {
 #define levitree_RoutableMessage_init_zero       {false, levitree_Endpoint_init_zero, false, levitree_Endpoint_init_zero, 0, {levitree_SystemInfoRequest_init_zero}}
 #define levitree_GPSState_init_zero              {0, 0, 0, 0, 0, 0, 0}
 #define levitree_SystemInfoRequest_init_zero     {0}
-#define levitree_SystemInfoResponse_init_zero    {0, 0, "", "", false, levitree_GPSState_init_zero}
+#define levitree_SystemInfoResponse_init_zero    {0, 0, "", "", false, levitree_GPSState_init_zero, _levitree_DeviceType_MIN}
 #define levitree_StateUpdateRequest_init_zero    {0}
 #define levitree_StateUpdateResponse_init_zero   {0, {levitree_ADCState_init_zero}}
 #define levitree_AcknowledgeResponse_init_zero   {0}
@@ -124,6 +126,7 @@ extern "C" {
 #define levitree_SystemInfoResponse_hardware_codename_tag 3
 #define levitree_SystemInfoResponse_software_codename_tag 4
 #define levitree_SystemInfoResponse_gps_state_tag 5
+#define levitree_SystemInfoResponse_device_type_tag 6
 #define levitree_StateUpdateResponse_adc_state_tag 1
 #define levitree_StateUpdateResponse_vfd_state_tag 2
 #define levitree_ErrorResponse_error_message_tag 1
@@ -207,7 +210,8 @@ X(a, STATIC,   SINGULAR, INT32,    firmware_version,   1) \
 X(a, STATIC,   SINGULAR, INT32,    hardware_version,   2) \
 X(a, STATIC,   SINGULAR, STRING,   hardware_codename,   3) \
 X(a, STATIC,   SINGULAR, STRING,   software_codename,   4) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  gps_state,         5)
+X(a, STATIC,   OPTIONAL, MESSAGE,  gps_state,         5) \
+X(a, STATIC,   SINGULAR, UENUM,    device_type,       6)
 #define levitree_SystemInfoResponse_CALLBACK NULL
 #define levitree_SystemInfoResponse_DEFAULT NULL
 #define levitree_SystemInfoResponse_gps_state_MSGTYPE levitree_GPSState
@@ -266,7 +270,7 @@ extern const pb_msgdesc_t levitree_ErrorResponse_msg;
 #define levitree_StateUpdateRequest_size         0
 #define levitree_StateUpdateResponse_size        195
 #define levitree_SystemInfoRequest_size          0
-#define levitree_SystemInfoResponse_size         136
+#define levitree_SystemInfoResponse_size         138
 
 #ifdef __cplusplus
 } /* extern "C" */
