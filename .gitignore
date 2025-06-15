@@ -1,5 +1,10 @@
 src
 src/**
-*.pb-c.c
-*.pb-c.h
+
+#Generated files
+*.pb.c
+*.pb.h
+Makefile
+cmake_install.cmake
+CMakeFiles
 .DS_Store
