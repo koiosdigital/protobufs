@@ -1,0 +1,5 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  nikas-belogolov/nanopb:
+    version: "=1.0.0"

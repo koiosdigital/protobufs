@@ -1,5 +1,4 @@
 src
 src/**
-*.pb-c.c
-*.pb-c.h
-.DS_Store
+nanopb
+nanopb/**
