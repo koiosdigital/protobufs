@@ -10,6 +10,9 @@ set(NANOPB_SRCS
     "${NANOPB_OUT_PATH}/discovery.pb.c"
     "${NANOPB_OUT_PATH}/heartbeat.pb.c"
     "${NANOPB_OUT_PATH}/enums.pb.c"
+    "${NANOPB_OUT_PATH}/pb_common.c"
+    "${NANOPB_OUT_PATH}/pb_encode.c"
+    "${NANOPB_OUT_PATH}/pb_decode.c"
 )
 
 set(PROTO_SRCS
@@ -30,4 +33,13 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
             VERBATIM)
 endif()
 
-idf_component_register(SRCS "${NANOPB_SRCS}" INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/nanopb" REQUIRES nanopb)
+if(ESP_PLATFORM)
+idf_component_register(SRCS "${NANOPB_SRCS}" INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/nanopb")
+else()
+add_library(protobufs STATIC ${NANOPB_SRCS})
+target_include_directories(protobufs PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/nanopb
+)
+target_sources(protobufs PRIVATE ${NANOPB_SRCS})
+endif()
+

@@ -1,4 +1,4 @@
 src
 src/**
-nanopb
-nanopb/**
+*.pb.c
+*.pb.h
