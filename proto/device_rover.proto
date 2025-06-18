@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package levitree;
+
+message RoverCommandRequest {
+  oneof command {
+    RoverMovementCommand movement_command = 1;
+  }
+}
+
+message RoverCommandResponse {
+  
+}
+
+message RoverDeviceState {
+  bool tracks_active = 1; // Indicates if the rover tracks are active
+  int32 left_right = 2; // Left-right wheel speed in 0-100. 50 is stopped, 0 left and 100 right.
+  int32 forward_backward = 3; // Forward-backward wheel speed in 0-100. 50 is stopped, 0 backward and 100 forward.
+}
+
+message RoverMovementCommand {
+  bool tracks_active = 1; // Indicates if the rover tracks are active
+  int32 left_right = 2; // Left-right wheel speed in 0-100. 50 is stopped, 0 left and 100 right.
+  int32 forward_backward = 3; // Forward-backward wheel speed in 0-100. 50 is stopped, 0 backward and 100 forward.
+}

@@ -3,6 +3,7 @@ syntax = "proto3";
 package levitree;
 
 import "device_adc.proto";
+import "device_rover.proto";
 import "device_vfd.proto";
 import "discovery.proto";
 import "enums.proto";
@@ -31,6 +32,9 @@ message RoutableMessage {
 
     ADCCommandRequest adc_command_req = 19;
     ADCCommandResponse adc_command_res = 20;
+
+    RoverCommandRequest rover_command_req = 21;
+    RoverCommandResponse rover_command_res = 22;
 
     HeartbeatRequest heartbeat = 251;
     HeartbeatResponse heartbeat_response = 252;
@@ -74,6 +78,7 @@ message StateUpdateResponse {
     ADCState adc_state = 1; //done
     VFDState vfd_state = 2; //done
     RoutingDeviceState routing_device_state = 3; //done
+    RoverDeviceState = 4; //done
   }
 }
 
