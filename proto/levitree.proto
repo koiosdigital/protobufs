@@ -78,7 +78,7 @@ message StateUpdateResponse {
     ADCState adc_state = 1; //done
     VFDState vfd_state = 2; //done
     RoutingDeviceState routing_device_state = 3; //done
-    RoverDeviceState = 4; //done
+    RoverDeviceState rover_device_state = 4; //done
   }
 }
 
