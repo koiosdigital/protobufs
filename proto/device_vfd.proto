@@ -39,6 +39,8 @@ message VFDState {
   VFDDriveMode drive_mode = 5;
   VFDFailSafeMode fail_safe_mode = 6;
   int32 alarm_code = 7;
+  float min_frequency_hz = 8;
+  float max_frequency_hz = 9;
 }
 
 message SetFailSafeRequest {
