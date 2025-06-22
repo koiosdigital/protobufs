@@ -42,6 +42,9 @@ add_library(protobufs STATIC ${NANOPB_SRCS})
 target_include_directories(protobufs PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/nanopb
 )
+target_compile_definitions(protobufs PUBLIC PB_BUFFER_ONLY)
+target_compile_definitions(protobufs PUBLIC PB_LITTLE_ENDIAN_8BIT)
+target_compile_definitions(protobufs PUBLIC PB_NO_ERRMSG)
 target_sources(protobufs PRIVATE ${NANOPB_SRCS})
 endif()
 
