@@ -6,6 +6,7 @@ set(NANOPB_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/nanopb")
 set(NANOPB_SRCS
     "${NANOPB_OUT_PATH}/levitree.pb.c"
     "${NANOPB_OUT_PATH}/device_adc.pb.c"
+    "${NANOPB_OUT_PATH}/device_efc.pb.c"
     "${NANOPB_OUT_PATH}/device_vfd.pb.c"
     "${NANOPB_OUT_PATH}/device_rover.pb.c"
     "${NANOPB_OUT_PATH}/discovery.pb.c"
@@ -19,6 +20,7 @@ set(NANOPB_SRCS
 set(PROTO_SRCS
     "${CMAKE_CURRENT_LIST_DIR}/proto/levitree.proto"
     "${CMAKE_CURRENT_LIST_DIR}/proto/device_adc.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/proto/device_efc.proto"
     "${CMAKE_CURRENT_LIST_DIR}/proto/device_vfd.proto"
     "${CMAKE_CURRENT_LIST_DIR}/proto/device_rover.proto"
     "${CMAKE_CURRENT_LIST_DIR}/proto/discovery.proto"
