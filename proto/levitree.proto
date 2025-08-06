@@ -3,9 +3,11 @@ syntax = "proto3";
 package levitree;
 
 import "device_adc.proto";
+import "device_efc.proto";
 import "device_rover.proto";
 import "device_vfd.proto";
 import "discovery.proto";
+import "firmware_update.proto";
 import "enums.proto";
 import "heartbeat.proto";
 
@@ -33,13 +35,19 @@ message RoutableMessage {
     ADCCommandRequest adc_command_req = 19;
     ADCCommandResponse adc_command_res = 20;
 
-    RoverCommandRequest rover_command_req = 21;
-    RoverCommandResponse rover_command_res = 22;
+    EFCCommandRequest efc_command_req = 21;
+    EFCCommandResponse efc_command_res = 22;
+
+    RoverCommandRequest rover_command_req = 23;
+    RoverCommandResponse rover_command_res = 24;
 
     HeartbeatRequest heartbeat = 251;
     HeartbeatResponse heartbeat_response = 252;
     AcknowledgeResponse acknowledge_response = 253;
     ErrorResponse error_response = 254;
+
+    FirmwareUpdateRequest firmware_update_req = 255;
+    FirmwareUpdateResponse firmware_update_res = 256;
   }
 }
 
@@ -79,6 +87,7 @@ message StateUpdateResponse {
     VFDState vfd_state = 2; //done
     RoutingDeviceState routing_device_state = 3; //done
     RoverDeviceState rover_device_state = 4; //done
+    EFCState efc_state = 5; //done
   }
 }
 

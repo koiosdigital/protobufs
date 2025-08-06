@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package levitree;
+
+message FirmwareUpdateRequest {
+  oneof command {
+    StartUpdateRequest start_update = 1;
+    UpdateDataBlockRequest update_data_block = 2;
+    FinishUpdateRequest finish_update = 3;
+  }
+}
+
+message StartUpdateRequest {
+  
+}
+
+message FinishUpdateRequest {
+  bool do_reboot = 1; // Indicates if the device should reboot after the update
+}
+
+message UpdateDataBlockRequest {
+  bytes data_block = 1; // The firmware data block to be sent
+  uint32 block_offset = 2; // Byte offset in the firmware image where this block should be written
+}
+
+message FirmwareUpdateResponse {
+  bool success = 1; // Indicates if the firmware update operation was successful
+  string message = 2; // Optional message providing additional information about the operation
+}
