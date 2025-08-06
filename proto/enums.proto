@@ -11,4 +11,5 @@ enum DeviceType {
   DEVICE_TYPE_ADC_8 = 5; //deprecated
   DEVICE_TYPE_VFD = 6;
   DEVICE_TYPE_ROVER = 7;
+  DEVICE_TYPE_EFC = 8;
 }
