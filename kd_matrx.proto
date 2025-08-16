@@ -10,8 +10,7 @@ message KDMatrxMessage {
         RenderResponse render_response = 4; //from server
 
         //commands
-        PinScheduleItem pin_schedule_item = 8; //bidirectional
-        SkipScheduleItem skip_schedule_item = 9; //bidirectional
+        ModifyScheduleItem modify_schedule_item = 5; //bidirectional
     }
 }
 
@@ -22,10 +21,9 @@ message RequestSchedule {
 
 message ScheduleItem {
     bytes uuid = 1;
-    uint32 display_time = 3;
-    bool pinned = 4;
-    bool skipped_by_user = 5;
-    bool skipped_by_server = 6;
+    uint32 display_time = 2;
+    bool pinned = 3;
+    bool skipped = 4;
 }
 
 message ScheduleResponse {
@@ -41,14 +39,13 @@ message RequestRender {
 
 message RenderResponse {
     bytes uuid = 1;
-    bytes sprite_data = 3;
-    bool render_error = 5;
+    bytes sprite_data = 2;
+    bool render_error = 3;
+    uint32 max_age = 4;
 }
 
-message PinScheduleItem {
-    bytes schedule_item_uuid = 1;
-}
-
-message SkipScheduleItem {
-    bytes schedule_item_uuid = 1;
+message ModifyScheduleItem {
+    bytes uuid = 1;
+    bool  pinned = 2;
+    bool  skipped = 3;
 }
