@@ -5,18 +5,46 @@ package kd;
 message KDGlobalMessage {
     oneof message {
         //Requests
-        Join join = 1; //to server
-        ClaimDevice claim_device = 2; //to server
-        UploadCoreDump upload_core_dump = 3; //to server
-        Restart restart = 4; //to server
-        ForceOTA force_ota = 5; //to server
+        InitiateClaimSession initiate_claim_session = 2; //to server
+        GetClaimSessionStatus get_claim_session_status = 3; //to server
+        EndClaimSession end_claim_session = 4; //to server
+        UploadCoreDump upload_core_dump = 5; //to server
         
         //Responses
+        ClaimSessionStarted claim_session_started = 100; //from server
+        ClaimSessionStatus claim_session_status = 102; //from server
+        ClaimSessionEnded claim_session_ended = 101; //from server
         JoinResponse join_response = 200; //from server
         OKResponse ok_response = 201; //from server
         ErrorResponse error_response = 202; //from server
     }
 }
+
+message InitiateClaimSession {
+
+}
+
+message GetClaimSessionStatus {
+
+}
+
+message EndClaimSession {
+
+}
+
+message ClaimSessionStarted {
+    string device_code = 1;
+}
+
+message ClaimSessionStatus {
+    bool is_active = 1;
+    bool is_completed = 2;
+}
+
+message ClaimSessionEnded {
+    bool was_successful = 1;
+}
+
 
 message OKResponse {
     bool success = 1;
@@ -28,11 +56,7 @@ message ErrorResponse {
 
 message JoinResponse {
     bool success = 1;
-    bool needs_claimed = 2;
-}
-
-message ClaimDevice {
-    string claim_token = 1;
+    bool is_claimed = 2;
 }
 
 message UploadCoreDump {
@@ -40,22 +64,4 @@ message UploadCoreDump {
     string firmware_project = 2;
     string firmware_version = 3;
     string firmware_variant = 4;
-}
-
-message Restart {
-
-}
-
-message ForceOTA {
-    string firmware_project = 1;
-    string firmware_version = 2;
-    string firmware_variant = 3;
-}
-
-message Join {
-    string device_id = 1;
-    string device_type = 2;
-    string firmware_version = 3;
-    string firmware_variant = 4;
-    string firmware_project = 5;
 }
