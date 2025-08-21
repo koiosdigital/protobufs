@@ -9,6 +9,7 @@ set(PROTO_SRCS
     "${CMAKE_CURRENT_LIST_DIR}/kd_global.proto"
     "${CMAKE_CURRENT_LIST_DIR}/kd_lantern.proto"
     "${CMAKE_CURRENT_LIST_DIR}/kd_matrx.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/kd_keyloq.proto"
 )
     
 set(pb_csrcs
@@ -16,6 +17,7 @@ set(pb_csrcs
     "${C_OUT_PATH}/kd_global.pb-c.c"
     "${C_OUT_PATH}/kd_lantern.pb-c.c"
     "${C_OUT_PATH}/kd_matrx.pb-c.c"
+    "${C_OUT_PATH}/kd_keyloq.pb-c.c"
 )
     
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
