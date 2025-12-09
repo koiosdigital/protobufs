@@ -1,9 +1,10 @@
 syntax = "proto3";
 
-package levitree;
+package ringbahn.v1;
 
-import "enums.proto";
+import "common/types.proto";
 
+// Discovery service command request
 message DiscoveryCommandRequest {
   oneof message {
     IdentifyActiveDeviceRequest identify_active_device_req = 1;
@@ -12,6 +13,7 @@ message DiscoveryCommandRequest {
   }
 }
 
+// Discovery service command response
 message DiscoveryCommandResponse {
   oneof message {
     AttachedDevicesResponse attached_devices_res = 1;
@@ -19,24 +21,22 @@ message DiscoveryCommandResponse {
   }
 }
 
+// Request to list all attached devices
 message AttachedDevicesRequest {
-  
+  // Empty - request all devices
 }
 
+// Response with list of attached devices
 message AttachedDevicesResponse {
   repeated DeviceInfo devices = 1;
 }
 
+// Request to identify the active device
 message IdentifyActiveDeviceRequest {
-  
+  // Empty - identify current device
 }
 
-message DeviceInfo {
-  DeviceType device_type = 1;
-  uint32 channels = 2; //number of channels available for this device
-  bytes mcu_id = 3; //unique identifier for the device
-}
-
+// Request to set channel identity/activation
 message SetChannelIdentityRequest {
   int32 channel = 1;
   bool active = 2;

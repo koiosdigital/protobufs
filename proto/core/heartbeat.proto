@@ -1,11 +1,13 @@
 syntax = "proto3";
 
-package levitree;
+package ringbahn.v1;
 
+// Request for heartbeat (keep-alive)
 message HeartbeatRequest {
-
+  // Empty - simple ping
 }
 
+// Response to heartbeat with timestamp
 message HeartbeatResponse {
   int64 timestamp = 1; // Timestamp in milliseconds since epoch
 }

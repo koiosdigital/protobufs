@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/enums.proto";
+
+// Represents a unique endpoint in the Terranova network
+message Endpoint {
+    oneof identifier {
+        bytes mcu_id = 1; // Unique MCU identifier;
+        uint32 short_id = 2; // Short numeric identifier;
+    }
+}
+
+// Standard command response
+message CommandStatus {
+  bool success = 1;
+  int32 error_code = 2;
+}
+
+// Response metadata for debugging and monitoring
+message ResponseMetadata {
+  int64 processing_time_us = 1; // Processing time in microseconds;
+  int64 timestamp_ms = 2; // Response timestamp;
+}
+
+// Device information returned during discovery
+message DeviceInfo {
+  DeviceType device_type = 1;
+  bytes mcu_id = 2; // Unique identifier for the device;
+  uint32 short_id = 3; // Short numeric identifier;
+}

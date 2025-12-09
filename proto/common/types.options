@@ -1,0 +1,2 @@
+ringbahn.v1.Endpoint.mcu_id max_size:16 fixed_length:true
+ringbahn.v1.DeviceInfo.mcu_id max_size:16 fixed_length:true

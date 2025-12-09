@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Buf lint
+        run: buf lint
+
+      - name: Buf format check
+        run: buf format --diff --exit-code
+
+  validate:
+    name: Validate Proto Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      - name: Validate syntax
+        run: |
+          find proto -name "*.proto" | while read f; do
+            echo "Validating $f"
+            protoc --proto_path=proto --descriptor_set_out=/dev/null "$f"
+          done
+
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+    needs: [lint, validate]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      - name: Install nanopb
+        run: pip install nanopb
+
+      - name: Generate code
+        run: |
+          chmod +x scripts/generate.sh
+          ./scripts/generate.sh
+
+      - name: Verify generation
+        run: |
+          [ -d "generated/nanopb" ] || exit 1
+          find generated/nanopb -name "*.pb.c" | grep -q . || exit 1
+          echo "✅ Build successful"

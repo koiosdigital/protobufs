@@ -1,0 +1,68 @@
+name: Lint Protocol Buffers
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "proto/**/*.proto"
+      - "buf.yaml"
+      - ".github/workflows/lint.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "proto/**/*.proto"
+      - "buf.yaml"
+      - ".github/workflows/lint.yml"
+
+jobs:
+  lint:
+    name: Lint Proto Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint proto files
+        run: buf lint
+
+      - name: Check format
+        run: buf format --diff --exit-code
+
+      - name: Breaking change detection
+        if: github.event_name == 'pull_request'
+        run: |
+          buf breaking --against "https://github.com/${GITHUB_REPOSITORY}.git#branch=main"
+        continue-on-error: true
+
+  validate:
+    name: Validate Proto Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate proto files
+        run: |
+          # Find all proto files and validate syntax
+          find proto -name "*.proto" -type f | while read proto_file; do
+            echo "Validating $proto_file..."
+            protoc --proto_path=proto --descriptor_set_out=/dev/null "$proto_file"
+          done
+
+      - name: Run validation script
+        run: |
+          chmod +x scripts/validate.sh
+          ./scripts/validate.sh

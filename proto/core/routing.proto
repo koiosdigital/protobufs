@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/types.proto";
+import "core/heartbeat.proto";
+import "core/system.proto";
+import "devices/device_adc.proto";
+import "devices/device_digital_output.proto";
+import "devices/device_rover.proto";
+import "devices/device_vfd.proto";
+import "services/discovery.proto";
+import "services/firmware_update.proto";
+
+// Main routing message that wraps all protocol messages
+message RoutableMessage {
+  // Routing fields (1-9)
+  Endpoint source = 1;
+  Endpoint destination = 2;
+  uint32 request_id = 3; // Numeric correlation ID for tracking request/response pairs;
+
+  oneof payload {
+    // Core system messages (10-49)
+    SystemInfoRequest system_info_req = 4;
+    SystemInfoResponse system_info_res = 5;
+    HeartbeatRequest heartbeat_req = 6;
+    HeartbeatResponse heartbeat_res = 7;
+    AcknowledgeResponse acknowledge_res = 8;
+    ErrorResponse error_res = 9;
+
+    // Service messages (50-99)
+    DiscoveryCommandRequest discovery_command_req = 10;
+    DiscoveryCommandResponse discovery_command_res = 11;
+    FirmwareUpdateRequest firmware_update_req = 12;
+    FirmwareUpdateResponse firmware_update_res = 13;
+
+    // State management (100-119)
+    StateUpdateRequest state_update_req = 14;
+    StateUpdateResponse state_update_res = 15;
+
+    // Device commands - VFD (120-129)
+    VFDCommandRequest vfd_command_req = 16;
+    VFDCommandResponse vfd_command_res = 17;
+
+    // Device commands - ADC (130-139)
+    ADCCommandRequest adc_command_req = 18;
+    ADCCommandResponse adc_command_res = 19;
+
+    // Device commands - Digital Output (140-149)
+    DigitalOutputCommandRequest digital_output_command_req = 20;
+    DigitalOutputCommandResponse digital_output_command_res = 21;
+
+    // Device commands - Rover (150-159)
+    RoverCommandRequest rover_command_req = 22;
+    RoverCommandResponse rover_command_res = 23;
+  }
+}
+
+// Request for device state update
+message StateUpdateRequest {
+  uint32 requested_field_mask = 1; // Bitmask of fields to retrieve;
+  bool full_state = 2; // Request complete state if true, ignores requested_field_mask;
+}
+
+// Response containing current device state
+message StateUpdateResponse {
+  oneof message {
+    ADCState adc_state = 1;
+    VFDState vfd_state = 2;
+    RoutingDeviceState routing_device_state = 3;
+    RoverDeviceState rover_device_state = 4;
+    DigitalOutputState digital_output_state = 5;
+  }
+}
+
+// GPS location and telemetry data
+message GPSState {
+  double latitude = 1; // Latitude in degrees;
+  double longitude = 2; // Longitude in degrees;
+  float altitude = 3; // Altitude in meters;
+  float speed = 4; // Speed in m/s;
+  float heading = 5; // Heading in degrees;
+  int32 satellites = 6; // Number of satellites used for the fix;
+}
+
+
+// State information for routing devices (e.g., Hub)
+message RoutingDeviceState {
+  optional GPSState gps_state = 1; // GPS state information;
+  uint32 connected_devices = 2; // Number of connected devices;
+}

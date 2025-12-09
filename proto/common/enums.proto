@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0; // Unknown Device
+  DEVICE_TYPE_HUB = 1; // Main Hub
+  DEVICE_TYPE_NODE = 2; // Node Module
+  DEVICE_TYPE_ADC = 4; // Voltage ADC
+  DEVICE_TYPE_SD_ADC = 5; // Sigma Delta ADC
+  DEVICE_TYPE_VFD = 6; // deprecated
+  DEVICE_TYPE_ROVER = 7;
+  DEVICE_TYPE_DIGITAL_OUT = 8;
+  DEVICE_TYPE_RS485_BRIDGE = 9; // RS485 Bridge
+}
