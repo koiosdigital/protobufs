@@ -44,12 +44,12 @@ make
 
 ### Devices (`proto/devices/`)
 
-- **device_common.proto**: Shared commands (system info, heartbeat, errors)
+- **device_common.proto**: Shared commands (system info, ping, errors)
 - **device_routing.proto**: UART-to-CAN routing bridge (discovery + firmware)
 - **device_adc.proto**: Analog-to-Digital Converter
 - **device_digital_output.proto**: PWM / digital outputs
 - **device_rover.proto**: Rover movement control
-- **device_vfd.proto**: Variable Frequency Drive
+- **device_modbus_bridge.proto**: Modbus RTU/TCP bridge
 
 ## Ringbahn Frame Cheatsheet
 
@@ -64,6 +64,15 @@ Message IDs are arbitrary values assigned by the host for tracking request/respo
 
 ## Common Message Patterns
 
+### Ping (In-Band Connectivity Test)
+
+```protobuf
+PingCommand → Device
+CommandResult ← Device (success = 1)
+```
+
+**Note**: Heartbeat is handled out-of-band by the transport layer.
+
 ### Request-Response
 
 ```protobuf
@@ -73,7 +82,7 @@ SystemInfoResponse ← Device
 
 ### State Updates
 
-Devices publish state frames with payloads like `ADCState`, `VFDState`, etc. The host uses device type context to deserialize the correct protobuf message.
+Devices publish state frames with payloads like `ADCState`, `RoverDeviceState`, etc. The host uses device type context to deserialize the correct protobuf message.
 
 ### Device Commands
 
@@ -122,17 +131,16 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 
 ## Device Type Values
 
-| Name         | Value | Description                           |
-| ------------ | ----- | ------------------------------------- |
-| HUB          | 1     | Main hub                              |
-| NODE         | 2     | Node module                           |
-| ROUTING      | 3     | UART-to-CAN routing bridge            |
-| ADC          | 4     | Analog-to-Digital Converter           |
-| SD_ADC       | 5     | Sigma-Delta ADC                       |
-| VFD          | 6     | Variable Frequency Drive (deprecated) |
-| ROVER        | 7     | Mobile robot                          |
-| DIGITAL_OUT  | 8     | Digital output                        |
-| RS485_BRIDGE | 9     | RS485 bridge                          |
+| Name            | Value | Description                  |
+| --------------- | ----- | ---------------------------- |
+| HUB             | 1     | Main hub                     |
+| NODE            | 2     | Node module                  |
+| ROUTING         | 3     | UART-to-CAN routing bridge   |
+| ADC             | 4     | Analog-to-Digital Converter  |
+| SD_ADC          | 5     | Sigma-Delta ADC              |
+| ROVER           | 7     | Mobile robot                 |
+| DIGITAL_OUT     | 8     | Digital output               |
+| MODBUS_BRIDGE   | 9     | Modbus RTU/TCP bridge        |
 
 ## Useful Scripts
 
@@ -171,6 +179,8 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 - [ ] All includes resolve
 - [ ] Device communication works
 - [ ] Message serialization/deserialization works
+- [ ] PingCommand returns success=1
+- [ ] Modbus operations work correctly (if using Modbus Bridge)
 
 ## Common Gotchas
 
@@ -179,10 +189,35 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 3. **Nanopb options**: Must match package name with version
 4. **Field numbers**: Never reuse or change existing field numbers
 5. **Generated files**: Organize by subdirectory in output
+6. **No callbacks**: All arrays use `max_count` options, not `pb_callback_t`
+7. **Heartbeat**: Handled out-of-band - use `PingCommand` for in-band testing
+
+## Practical Tips
+
+### Quick Ping Test
+```c
+ringbahn_v1_PingCommand ping = ringbahn_v1_PingCommand_init_zero;
+// Send and expect CommandResult.success = 1
+```
+
+### Modbus Register Read
+```c
+ringbahn_v1_ModbusReadHoldingRegistersRequest req = {
+  .slave_address = 1,
+  .starting_address = 0,
+  .quantity = 10  // max 32
+};
+```
+
+### Check Device Type
+```c
+ringbahn_v1_SystemInfoRequest req = ringbahn_v1_SystemInfoRequest_init_zero;
+// Response contains device_type enum value
+```
 
 ## Version Information
 
-- **Current Version**: 1.1.0
+- **Current Version**: 1.2.0
 - **Package**: ringbahn.v1
 - **Last Updated**: December 15, 2025
 

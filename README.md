@@ -15,12 +15,12 @@ protobufs/
 │   │   ├── enums.proto       # Device types and common enums
 │   │   └── types.proto       # Device UUIDs, CommandResult, GPSState, etc.
 │   └── devices/               # Device-specific protocols + shared helpers
-│       ├── device_common.proto      # Shared commands (system info, heartbeat, errors)
+│       ├── device_common.proto      # Shared commands (system info, ping, errors)
 │       ├── device_routing.proto     # UART-to-CAN bridge, discovery, firmware tools
 │       ├── device_adc.proto         # Analog-to-Digital Converter
 │       ├── device_digital_output.proto # PWM/digital outputs
 │       ├── device_rover.proto       # Rover control
-│       └── device_vfd.proto         # Variable Frequency Drive
+│       └── device_modbus_bridge.proto # Modbus RTU/TCP bridge
 ├── generated/                 # Generated code (not committed)
 │   └── nanopb/               # Nanopb C implementations
 ├── docs/                      # Documentation
@@ -175,24 +175,25 @@ The system supports multiple device types:
 - `DEVICE_TYPE_ROUTING`: UART-to-CAN routing bridge (handles discovery + firmware)
 - `DEVICE_TYPE_ADC`: Analog-to-Digital Converter
 - `DEVICE_TYPE_SD_ADC`: Sigma-delta ADC
-- `DEVICE_TYPE_VFD`: Variable Frequency Drive (legacy field devices)
 - `DEVICE_TYPE_ROVER`: Mobile robot platform
 - `DEVICE_TYPE_DIGITAL_OUT`: PWM / digital output bridge
-- `DEVICE_TYPE_RS485_BRIDGE`: RS485 transport bridge
+- `DEVICE_TYPE_MODBUS_BRIDGE`: Modbus RTU/TCP bridge
 - Additional values can be added as needed in `common/enums.proto`
 
 ### Communication Patterns
 
 1. **Request-Response**: Commands return responses with matching message_id
-2. **State Updates**: Devices broadcast their `<Device>State` payloads (e.g., `ADCState`, `VFDState`)
-3. **Discovery**: Automatic device detection
-4. **Heartbeat**: Keep-alive mechanism
+2. **State Updates**: Devices broadcast their `<Device>State` payloads (e.g., `ADCState`, `RoverDeviceState`)
+3. **Discovery**: Automatic device detection via routing device
+4. **Ping**: In-band connectivity test using `PingCommand` (returns `CommandResult` with success=1)
+
+**Note**: Heartbeat/keep-alive is handled out-of-band by the transport layer and is not part of the protobuf protocol.
 
 See [PROTOCOL.md](docs/PROTOCOL.md) for detailed protocol specification.
 
 ### Shared Commands
 
-`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `HeartbeatRequest/Response`, `AcknowledgeResponse`, and `ErrorResponse`.
+`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `PingCommand`, `AcknowledgeResponse`, and `ErrorResponse`.
 
 ### Routing Device
 
@@ -276,6 +277,6 @@ For questions or issues, please open an issue on GitHub or contact the Terranova
 
 ---
 
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Last Updated**: December 15, 2025  
 **Maintainer**: Terranova Team

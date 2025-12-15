@@ -5,6 +5,32 @@ All notable changes to the Terranova Protocol Buffers will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-15
+
+### Added
+
+- **PingCommand**: New universal ping command for all devices (returns `CommandResult` with success=1)
+- **Modbus Bridge Device**: Complete Modbus RTU/TCP bridge replacing VFD device
+  - Read/Write Coils (FC 01, 05, 15)
+  - Read/Write Discrete Inputs (FC 02)
+  - Read/Write Holding Registers (FC 03, 06, 16)
+  - Read/Write Input Registers (FC 04)
+  - All bulk operations support up to 32 coils/registers
+  - Fixed-size static arrays (no `pb_callback_t`)
+
+### Changed
+
+- **HeartbeatRequest/HeartbeatResponse**: Removed from protocol - heartbeat is now handled out-of-band by transport layer
+- **All Device Commands**: Now include `PingCommand` at field tag 2 for consistent in-band connectivity testing
+- **VFD Device**: Replaced with Modbus Bridge device (`device_modbus_bridge.proto`)
+- **Documentation**: Complete revamp of all docs to reflect current protocol state
+
+### Removed
+
+- Heartbeat messages from `device_common.proto` (out-of-band functionality)
+- VFD-specific commands (replaced by generic Modbus operations)
+- `device_vfd.proto` and related generated files
+
 ## [1.1.0] - 2025-12-15
 
 ### Added

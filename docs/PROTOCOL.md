@@ -325,20 +325,23 @@ For production deployments:
 
 Typical message sizes (serialized):
 
-- `HeartbeatRequest`: ~2 bytes
+- `PingCommand`: ~2 bytes
 - `SystemInfoRequest`: ~2 bytes
 - `ADCState` (8 channels): ~80 bytes
-- `VFDState`: ~40 bytes
-- `FirmwareUpdateDataBlock`: ~260 bytes
+- `RoverDeviceState`: ~20 bytes
+- `ModbusReadHoldingRegistersRequest`: ~10 bytes
+- `ModbusReadHoldingRegistersResponse` (32 registers): ~130 bytes
 
 ### Throughput
 
 - Nanopb encoding/decoding: ~1-10 μs per message (typical MCU)
 - Maximum message size: Limited by transport layer (typically 1KB-4KB)
 - Recommended update rates:
-  - Heartbeat: 1 Hz
+  - Ping: As needed for connectivity testing (not for keep-alive)
   - State updates: 0.1-10 Hz (device-dependent)
   - Commands: On-demand
+
+**Note**: Keep-alive/heartbeat should be handled by the transport layer (e.g., TCP keep-alive, UART timeout detection) and not via protocol messages.
 
 ## Testing
 
@@ -369,7 +372,109 @@ Example test structure:
 
 ## Examples
 
-See the main README for code generation examples and integration guides.
+### Example 1: Ping a Device
+
+```c
+// Create ping command
+ringbahn_v1_PingCommand ping = ringbahn_v1_PingCommand_init_zero;
+
+// Encode to payload
+uint8_t payload[32];
+pb_ostream_t stream = pb_ostream_from_buffer(payload, sizeof(payload));
+pb_encode(&stream, ringbahn_v1_PingCommand_fields, &ping);
+
+// Build Ringbahn frame (simplified)
+uint16_t msg_id = 42;
+// ... assemble frame with message_id, payload, CRC ...
+
+// Decode response
+ringbahn_v1_CommandResult result = ringbahn_v1_CommandResult_init_zero;
+pb_istream_t in_stream = pb_istream_from_buffer(response_payload, payload_len);
+pb_decode(&in_stream, ringbahn_v1_CommandResult_fields, &result);
+
+if (result.success) {
+  printf("Ping successful!\n");
+}
+```
+
+### Example 2: Read Modbus Holding Registers
+
+```c
+// Read 10 registers starting at address 1000 from slave 1
+ringbahn_v1_ModbusReadHoldingRegistersRequest req = {
+  .slave_address = 1,
+  .starting_address = 1000,
+  .quantity = 10
+};
+
+// Send request...
+
+// Decode response
+ringbahn_v1_ModbusReadHoldingRegistersResponse resp = 
+  ringbahn_v1_ModbusReadHoldingRegistersResponse_init_zero;
+pb_decode(&stream, ringbahn_v1_ModbusReadHoldingRegistersResponse_fields, &resp);
+
+printf("Read %u registers:\n", (unsigned)resp.values_count);
+for (size_t i = 0; i < resp.values_count; i++) {
+  printf("  Register %u: %u\n", (unsigned)(1000 + i), resp.values[i]);
+}
+```
+
+### Example 3: Write Multiple Modbus Coils
+
+```c
+// Write 8 coils starting at address 100
+ringbahn_v1_ModbusWriteMultipleCoilsRequest req = {
+  .slave_address = 1,
+  .starting_address = 100,
+  .values_count = 8
+};
+
+// Set coil values (alternating pattern)
+for (size_t i = 0; i < 8; i++) {
+  req.values[i] = (i % 2 == 0);
+}
+
+// Send request...
+
+// Decode response
+ringbahn_v1_CommandResult result = ringbahn_v1_CommandResult_init_zero;
+pb_decode(&stream, ringbahn_v1_CommandResult_fields, &result);
+
+if (result.success) {
+  printf("Successfully wrote %u coils\n", (unsigned)req.values_count);
+} else {
+  printf("Write failed: error_code=%d, detail=%s\n", 
+         result.error_code, result.detail);
+}
+```
+
+### Example 4: Query System Information
+
+```c
+// Create system info request
+ringbahn_v1_SystemInfoRequest req = ringbahn_v1_SystemInfoRequest_init_zero;
+
+// Send request...
+
+// Decode response
+ringbahn_v1_SystemInfoResponse resp = ringbahn_v1_SystemInfoResponse_init_zero;
+pb_decode(&stream, ringbahn_v1_SystemInfoResponse_fields, &resp);
+
+printf("Device Info:\n");
+printf("  Type: %d\n", resp.device_type);
+printf("  HW Version: %u\n", resp.hardware_version);
+printf("  SW Version: %u\n", resp.software_version);
+printf("  Uptime: %lld ms\n", resp.uptime_ms);
+
+if (resp.has_device_info) {
+  printf("  UUID: ");
+  for (size_t i = 0; i < resp.device_info.device_uuid.value.size; i++) {
+    printf("%02X", resp.device_info.device_uuid.value.bytes[i]);
+  }
+  printf("\n");
+}
+```
 
 ## References
 
@@ -383,6 +488,6 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: December 9, 2025  
+**Document Version**: 1.2  
+**Last Updated**: December 15, 2025  
 **Status**: Current

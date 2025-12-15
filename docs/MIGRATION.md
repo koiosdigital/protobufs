@@ -1,3 +1,131 @@
+# Migration Guide: v1.1.0 to v1.2.0
+
+## Quick Summary
+
+### What Changed
+
+1. **Heartbeat removed**: Now handled out-of-band by transport layer
+2. **PingCommand added**: All devices support in-band ping (returns `CommandResult` with success=1)
+3. **VFD → Modbus Bridge**: Complete replacement with full Modbus protocol support
+4. **Field tag consistency**: All devices now have `ping` at field tag 2
+
+### Breaking Changes
+
+- `HeartbeatRequest` and `HeartbeatResponse` removed from `device_common.proto`
+- `device_vfd.proto` removed, replaced by `device_modbus_bridge.proto`
+- All `VFDDeviceCommand`, `VFDState`, and VFD enums removed
+
+## Migration Steps
+
+### 1. Replace Heartbeat with Transport-Level Keep-Alive
+
+**Old Code**:
+```c
+ringbahn_v1_HeartbeatRequest req = ringbahn_v1_HeartbeatRequest_init_zero;
+// Send heartbeat
+```
+
+**New Approach**: Implement keep-alive at the transport layer (e.g., TCP keep-alive, UART timeout detection). For in-band testing, use:
+
+```c
+ringbahn_v1_PingCommand ping = ringbahn_v1_PingCommand_init_zero;
+// Send and expect CommandResult with success=1
+```
+
+### 2. Migrate VFD to Modbus Bridge
+
+If you were using VFD commands, map them to Modbus operations:
+
+**Old VFD Code**:
+```c
+ringbahn_v1_SetFrequencyRequest req = {
+  .frequency_hz = 50.0f
+};
+```
+
+**New Modbus Bridge Code**:
+```c
+// Write frequency to holding register (example address 0x1000)
+ringbahn_v1_ModbusWriteSingleRegisterRequest req = {
+  .slave_address = 1,
+  .register_address = 0x1000,
+  .value = 5000  // 50.00 Hz * 100
+};
+```
+
+### 3. Update Device Command Usage
+
+**Old**:
+```c
+typedef struct _ringbahn_v1_ADCDeviceCommand {
+  pb_size_t which_command;
+  union {
+    ringbahn_v1_SystemInfoRequest system_info;  // tag 1
+    ringbahn_v1_HeartbeatRequest heartbeat;     // tag 2 - REMOVED
+    ringbahn_v1_PingCommand ping;               // tag 3 - MOVED TO 2
+    // ...
+  } command;
+} ringbahn_v1_ADCDeviceCommand;
+```
+
+**New**:
+```c
+typedef struct _ringbahn_v1_ADCDeviceCommand {
+  pb_size_t which_command;
+  union {
+    ringbahn_v1_SystemInfoRequest system_info;  // tag 1
+    ringbahn_v1_PingCommand ping;               // tag 2
+    // ...
+  } command;
+} ringbahn_v1_ADCDeviceCommand;
+```
+
+### 4. Update Imports
+
+**Remove**:
+```c
+#include "devices/device_vfd.pb.h"
+```
+
+**Add**:
+```c
+#include "devices/device_modbus_bridge.pb.h"
+```
+
+### 5. Regenerate Code
+
+```bash
+./scripts/generate.sh
+```
+
+## Detailed Modbus Mapping
+
+### VFD Operations to Modbus
+
+| Old VFD Command | Modbus Equivalent |
+|----------------|------------------|
+| `SetFrequencyRequest` | Write Single/Multiple Holding Register |
+| `SetDriveModeRequest` | Write Single Coil or Holding Register |
+| `SetFailSafeRequest` | Write Single Coil or Holding Register |
+| `ClearAlarmRequest` | Write Single Coil or Holding Register |
+| `VFDGetStateRequest` | Read Holding Registers or Input Registers |
+
+**Note**: The specific register addresses depend on your Modbus device documentation.
+
+## Verification Checklist
+
+- [ ] Removed all `HeartbeatRequest`/`HeartbeatResponse` usage
+- [ ] Implemented transport-level keep-alive if needed
+- [ ] Updated ping to use `PingCommand` at field tag 2
+- [ ] Migrated VFD code to Modbus Bridge operations
+- [ ] Updated all device command references
+- [ ] Regenerated all protocol buffer code
+- [ ] Updated imports to use `device_modbus_bridge.pb.h`
+- [ ] Tested connectivity with new PingCommand
+- [ ] Verified Modbus operations work correctly
+
+---
+
 # Migration Guide: Legacy to v1.1.0
 
 This guide helps you migrate from the legacy flat structure to the new organized v1.0.0 structure.
