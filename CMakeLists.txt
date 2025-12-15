@@ -33,8 +33,7 @@ set(NANOPB_DEVICE_SRCS
     "${NANOPB_OUT_PATH}/devices/device_common.pb.c"
     "${NANOPB_OUT_PATH}/devices/device_digital_output.pb.c"
     "${NANOPB_OUT_PATH}/devices/device_routing.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_vfd.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_rover.pb.c"
+    "${NANOPB_OUT_PATH}/devices/device_modbus_bridge.pb.c"
 )
 
 # All generated sources

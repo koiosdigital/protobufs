@@ -8,6 +8,14 @@ The Terranova protocol is a binary message-passing protocol designed for distrib
 
 **Current Version**: 1.2 (`ringbahn.v1`)
 
+## Key Features
+
+- **Lightweight framing**: Ringbahn binary frames with CRC16 validation
+- **Device discovery**: Automatic detection and enumeration via routing device
+- **Firmware updates**: In-band OTA for routing firmware and CAN nodes via Terraboot
+- **Modbus bridging**: Native Modbus RTU/TCP support via Modbus Bridge device
+- **No callbacks**: All arrays use fixed-size static allocation (no `pb_callback_t`)
+
 ## Architecture
 
 ### Ringbahn Frame
@@ -58,11 +66,22 @@ Client ← [Response] ← Device
 
 The host assigns a `message_id` to each request and the device echoes that same ID in its response, allowing the host to correlate replies with pending requests.
 
-### 2. State Updates
+### 2. Ping Command
 
-Devices may publish unsolicited state updates (e.g., `ADCState`, `VFDState`) or respond to explicit state query requests. The host must track device types to determine which protobuf message to deserialize.
+All devices support the `PingCommand` for in-band connectivity testing:
 
-### 3. Discovery
+```protobuf
+PingCommand → Device
+CommandResult ← Device (success = 1)
+```
+
+**Note**: Heartbeat functionality is handled out-of-band by the transport layer and is not part of the protobuf protocol.
+
+### 3. State Updates
+
+Devices may publish unsolicited state updates (e.g., `ADCState`, `RoverDeviceState`) or respond to explicit state query requests. The host must track device types to determine which protobuf message to deserialize.
+
+### 4. Discovery
 
 The discovery protocol allows dynamic device detection:
 
@@ -70,22 +89,26 @@ The discovery protocol allows dynamic device detection:
 2. **RoutingAttachedDevicesRequest/Response** – Returns the full list of devices (as `DeviceInfo`) detected on the CAN bus.
 3. **RoutingSetChannelIdentityRequest/Response** – Activates or deactivates CAN channels from the routing firmware.
 
-### 4. Heartbeat
-
-Periodic heartbeat messages maintain connection state:
-
-```protobuf
-HeartbeatRequest → Device
-HeartbeatResponse ← Device (with timestamp)
-```
-
 ## Device Types
+
+The protocol supports the following device types:
+
+- **DEVICE_TYPE_ROUTING** (3): UART-to-CAN routing bridge
+- **DEVICE_TYPE_ADC** (4): Analog-to-Digital Converter
+- **DEVICE_TYPE_ROVER** (7): Mobile robot control
+- **DEVICE_TYPE_DIGITAL_OUT** (8): PWM/Digital output control
+- **DEVICE_TYPE_MODBUS_BRIDGE** (9): Modbus RTU/TCP bridge (formerly VFD)
 
 ## Device-Specific Protocols
 
-`proto/devices/device_common.proto` contains helper payloads shared by every device:
+### Common Commands
 
-- `SystemInfoRequest` / `SystemInfoResponse` – queries hardware/software metadata and returns `DeviceInfo` (with device UUID).
+`proto/devices/device_common.proto` contains messages shared by every device:
+
+- `SystemInfoRequest` / `SystemInfoResponse` – Queries hardware/software metadata and returns `DeviceInfo` (with device UUID)
+- `PingCommand` – Simple connectivity test, returns `CommandResult` with success=1
+- `AcknowledgeResponse` – Generic acknowledgement
+- `ErrorResponse` – Structured error reporting with error code and detail
 
 ### Routing Device (UART-to-CAN Bridge)
 
@@ -133,23 +156,41 @@ message ADCChannelValue {
 }
 ```
 
-### VFD (Variable Frequency Drive)
+### Modbus Bridge
 
-**Purpose**: Control motor speed and direction
+**Purpose**: Bridge Modbus RTU/TCP devices to the Ringbahn network
+
+**Supported Operations**:
+- Read Coils (Function Code 01)
+- Read Discrete Inputs (Function Code 02)
+- Read Holding Registers (Function Code 03)
+- Read Input Registers (Function Code 04)
+- Write Single Coil (Function Code 05)
+- Write Single Register (Function Code 06)
+- Write Multiple Coils (Function Code 15)
+- Write Multiple Registers (Function Code 16)
+
+**Bulk Operations**: All multi-read/write operations support up to **32 coils or registers** per request.
 
 ```protobuf
-message VFDState {
-  float frequency_hz = 1;
-  float power_w = 2;
-  float current_a = 3;
-  float voltage_v = 4;
-  VFDDriveMode drive_mode = 5;
-  VFDFailSafeMode fail_safe_mode = 6;
-  int32 alarm_code = 7;
-  float min_frequency_hz = 8;
-  float max_frequency_hz = 9;
+message ModbusReadHoldingRegistersRequest {
+  uint32 slave_address = 1;      // 1-247
+  uint32 starting_address = 2;
+  uint32 quantity = 3;            // 1-32
+}
+
+message ModbusWriteMultipleRegistersRequest {
+  uint32 slave_address = 1;
+  uint32 starting_address = 2;
+  repeated uint32 values = 3;     // max 32
 }
 ```
+
+**Implementation Notes**:
+- No `pb_callback_t` – all arrays use fixed-size static allocation
+- Set via `.options` file: `max_count:32` for all bulk arrays
+- Returns `CommandResult` for write operations
+- Returns specific response types for read operations
 
 ### Rover
 
