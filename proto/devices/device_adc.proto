@@ -27,14 +27,14 @@ message ADCGetStateRequest {
 // Single ADC channel reading
 message ADCCurrentChannelValue {
   int32 channel_number = 1; // Channel number;
-  float current_ma = 2; // Current in milliamps;
+  int32 current_ma = 2; // Current in milliamps;
   bool open_line_detected = 3; // Indicates if an open line is detected;
 }
 
 // Single ADC voltage channel reading
 message ADCVoltageChannelValue {
   int32 channel_number = 1; // Channel number;
-  float voltage_mv = 2; // Voltage in millivolts;
+  int32 voltage_mv = 2; // Voltage in millivolts;
 }
 
 // Complete ADC device state
