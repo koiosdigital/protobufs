@@ -20,6 +20,7 @@
 ### 1. Replace Heartbeat with Transport-Level Keep-Alive
 
 **Old Code**:
+
 ```c
 ringbahn_v1_HeartbeatRequest req = ringbahn_v1_HeartbeatRequest_init_zero;
 // Send heartbeat
@@ -37,6 +38,7 @@ ringbahn_v1_PingCommand ping = ringbahn_v1_PingCommand_init_zero;
 If you were using VFD commands, map them to Modbus operations:
 
 **Old VFD Code**:
+
 ```c
 ringbahn_v1_SetFrequencyRequest req = {
   .frequency_hz = 50.0f
@@ -44,6 +46,7 @@ ringbahn_v1_SetFrequencyRequest req = {
 ```
 
 **New Modbus Bridge Code**:
+
 ```c
 // Write frequency to holding register (example address 0x1000)
 ringbahn_v1_ModbusWriteSingleRegisterRequest req = {
@@ -56,6 +59,7 @@ ringbahn_v1_ModbusWriteSingleRegisterRequest req = {
 ### 3. Update Device Command Usage
 
 **Old**:
+
 ```c
 typedef struct _ringbahn_v1_ADCDeviceCommand {
   pb_size_t which_command;
@@ -69,6 +73,7 @@ typedef struct _ringbahn_v1_ADCDeviceCommand {
 ```
 
 **New**:
+
 ```c
 typedef struct _ringbahn_v1_ADCDeviceCommand {
   pb_size_t which_command;
@@ -83,11 +88,13 @@ typedef struct _ringbahn_v1_ADCDeviceCommand {
 ### 4. Update Imports
 
 **Remove**:
+
 ```c
 #include "devices/device_vfd.pb.h"
 ```
 
 **Add**:
+
 ```c
 #include "devices/device_modbus_bridge.pb.h"
 ```
@@ -102,13 +109,13 @@ typedef struct _ringbahn_v1_ADCDeviceCommand {
 
 ### VFD Operations to Modbus
 
-| Old VFD Command | Modbus Equivalent |
-|----------------|------------------|
-| `SetFrequencyRequest` | Write Single/Multiple Holding Register |
-| `SetDriveModeRequest` | Write Single Coil or Holding Register |
-| `SetFailSafeRequest` | Write Single Coil or Holding Register |
-| `ClearAlarmRequest` | Write Single Coil or Holding Register |
-| `VFDGetStateRequest` | Read Holding Registers or Input Registers |
+| Old VFD Command       | Modbus Equivalent                         |
+| --------------------- | ----------------------------------------- |
+| `SetFrequencyRequest` | Write Single/Multiple Holding Register    |
+| `SetDriveModeRequest` | Write Single Coil or Holding Register     |
+| `SetFailSafeRequest`  | Write Single Coil or Holding Register     |
+| `ClearAlarmRequest`   | Write Single Coil or Holding Register     |
+| `VFDGetStateRequest`  | Read Holding Registers or Input Registers |
 
 **Note**: The specific register addresses depend on your Modbus device documentation.
 

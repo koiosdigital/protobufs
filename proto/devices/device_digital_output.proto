@@ -10,6 +10,7 @@ message DigitalOutputDeviceCommand {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
+    ResetCommand reset = 3; // Response: CommandResult
     
     // Digital Output-specific commands
     SetPWMChannelRequest set_channel = 10; // Response: AcknowledgeResponse

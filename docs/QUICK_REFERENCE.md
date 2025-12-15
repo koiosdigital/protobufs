@@ -131,16 +131,16 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 
 ## Device Type Values
 
-| Name            | Value | Description                  |
-| --------------- | ----- | ---------------------------- |
-| HUB             | 1     | Main hub                     |
-| NODE            | 2     | Node module                  |
-| ROUTING         | 3     | UART-to-CAN routing bridge   |
-| ADC             | 4     | Analog-to-Digital Converter  |
-| SD_ADC          | 5     | Sigma-Delta ADC              |
-| ROVER           | 7     | Mobile robot                 |
-| DIGITAL_OUT     | 8     | Digital output               |
-| MODBUS_BRIDGE   | 9     | Modbus RTU/TCP bridge        |
+| Name          | Value | Description                 |
+| ------------- | ----- | --------------------------- |
+| HUB           | 1     | Main hub                    |
+| NODE          | 2     | Node module                 |
+| ROUTING       | 3     | UART-to-CAN routing bridge  |
+| ADC           | 4     | Analog-to-Digital Converter |
+| SD_ADC        | 5     | Sigma-Delta ADC             |
+| ROVER         | 7     | Mobile robot                |
+| DIGITAL_OUT   | 8     | Digital output              |
+| MODBUS_BRIDGE | 9     | Modbus RTU/TCP bridge       |
 
 ## Useful Scripts
 
@@ -195,12 +195,14 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 ## Practical Tips
 
 ### Quick Ping Test
+
 ```c
 ringbahn_v1_PingCommand ping = ringbahn_v1_PingCommand_init_zero;
 // Send and expect CommandResult.success = 1
 ```
 
 ### Modbus Register Read
+
 ```c
 ringbahn_v1_ModbusReadHoldingRegistersRequest req = {
   .slave_address = 1,
@@ -210,6 +212,7 @@ ringbahn_v1_ModbusReadHoldingRegistersRequest req = {
 ```
 
 ### Check Device Type
+
 ```c
 ringbahn_v1_SystemInfoRequest req = ringbahn_v1_SystemInfoRequest_init_zero;
 // Response contains device_type enum value

@@ -10,6 +10,7 @@ message ModbusBridgeDeviceCommand {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
+    ResetCommand reset = 3; // Response: CommandResult
     
     // Modbus-specific commands
     ModbusReadCoilsRequest read_coils = 10; // Response: ModbusReadCoilsResponse

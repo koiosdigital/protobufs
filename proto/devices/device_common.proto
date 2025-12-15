@@ -29,3 +29,9 @@ message SystemInfoResponse {
 message PingCommand {
   // Empty - simple ping
 }
+
+// Request for device reset (common to all devices)
+// Response: CommandResult
+message ResetCommand {
+  // Empty - resets the device
+}

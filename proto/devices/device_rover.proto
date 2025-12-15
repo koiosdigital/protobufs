@@ -10,6 +10,7 @@ message RoverDeviceCommand {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
+    ResetCommand reset = 3; // Response: CommandResult
     
     // Rover-specific commands
     RoverMovementCommand movement = 10; // Response: AcknowledgeResponse

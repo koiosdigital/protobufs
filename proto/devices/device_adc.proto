@@ -10,6 +10,7 @@ message ADCDeviceCommand {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
+    ResetCommand reset = 3; // Response: CommandResult
     
     // ADC-specific commands
     ADCGetStateRequest get_state = 10; // Response: ADCState
@@ -24,13 +25,21 @@ message ADCGetStateRequest {
 }
 
 // Single ADC channel reading
-message ADCChannelValue {
-  int32 channel_number = 1;
-  int32 adc_value = 2; // Raw ADC value;
+message ADCCurrentChannelValue {
+  int32 channel_number = 1; // Channel number;
+  float current_ma = 2; // Current in milliamps;
+  bool open_line_detected = 3; // Indicates if an open line is detected;
+}
+
+// Single ADC voltage channel reading
+message ADCVoltageChannelValue {
+  int32 channel_number = 1; // Channel number;
+  float voltage_mv = 2; // Voltage in millivolts;
 }
 
 // Complete ADC device state
 message ADCState {
   int64 timestamp_ms = 1; // When state was captured (milliseconds since epoch);
-  repeated ADCChannelValue values = 2;
+  repeated ADCCurrentChannelValue current_values = 2; // ADC channel values;
+  repeated ADCVoltageChannelValue voltage_values = 3; // Voltage channel values;
 }

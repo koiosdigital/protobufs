@@ -11,6 +11,7 @@ message RoutingDeviceCommand {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
+    ResetCommand reset = 3; // Response: CommandResult
     
     // Discovery commands
     RoutingAttachedDevicesRequest attached_devices = 10; // Response: RoutingAttachedDevicesResponse
@@ -26,12 +27,13 @@ message RoutingDeviceCommand {
     InternalOtaSetBootPartitionRequest ota_set_boot = 24; // Response: InternalOtaStatus
     
     // Terraboot CAN bootloader commands
-    TerrabootConnectRequest terraboot_connect = 30; // Response: TerrabootConnectResponse
-    TerrabootSendBlockRequest terraboot_send = 31; // Response: TerrabootSendBlockResponse
-    TerrabootEofRequest terraboot_eof = 32; // Response: TerrabootEofResponse
-    TerrabootRequestBlockRequest terraboot_request = 33; // Response: TerrabootRequestBlockResponse
-    TerrabootCompleteRequest terraboot_complete = 34; // Response: TerrabootCompleteResponse
-    TerrabootGetIdRequest terraboot_get_id = 35; // Response: TerrabootGetIdResponse
+    TerrabootEnterRequest terraboot_enter = 30; // Response: AcknowledgeResponse
+    TerrabootConnectRequest terraboot_connect = 31; // Response: TerrabootConnectResponse
+    TerrabootSendBlockRequest terraboot_send = 32; // Response: TerrabootSendBlockResponse
+    TerrabootEofRequest terraboot_eof = 33; // Response: TerrabootEofResponse
+    TerrabootRequestBlockRequest terraboot_request = 34; // Response: TerrabootRequestBlockResponse
+    TerrabootCompleteRequest terraboot_complete = 35; // Response: TerrabootCompleteResponse
+    TerrabootGetIdRequest terraboot_get_id = 36; // Response: TerrabootGetIdResponse
   }
 }
 
@@ -102,9 +104,14 @@ message InternalOtaStatus {
 
 // ===== Terraboot-compatible CAN bootloader bridge =====
 
+// Response: AcknowledgeResponse
+message TerrabootEnterRequest {
+  DeviceUUID device_uuid = 1; // Target device to reset into bootloader mode (routing translates to CAN node ID)
+}
+
 // Response: TerrabootConnectResponse
 message TerrabootConnectRequest {
-  uint32 can_node_id = 1; // Destination CAN node ID
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
 }
 
 message TerrabootConnectResponse {
@@ -117,7 +124,7 @@ message TerrabootConnectResponse {
 
 // Response: TerrabootSendBlockResponse
 message TerrabootSendBlockRequest {
-  uint32 can_node_id = 1;
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
   uint32 block_address = 2;
   bytes data = 3;
 }
@@ -128,7 +135,7 @@ message TerrabootSendBlockResponse {
 
 // Response: TerrabootEofResponse
 message TerrabootEofRequest {
-  uint32 can_node_id = 1;
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
 }
 
 message TerrabootEofResponse {
@@ -137,7 +144,7 @@ message TerrabootEofResponse {
 
 // Response: TerrabootRequestBlockResponse
 message TerrabootRequestBlockRequest {
-  uint32 can_node_id = 1;
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
   uint32 block_address = 2;
 }
 
@@ -148,7 +155,7 @@ message TerrabootRequestBlockResponse {
 
 // Response: TerrabootCompleteResponse
 message TerrabootCompleteRequest {
-  uint32 can_node_id = 1;
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
 }
 
 message TerrabootCompleteResponse {
@@ -157,7 +164,7 @@ message TerrabootCompleteResponse {
 
 // Response: TerrabootGetIdResponse
 message TerrabootGetIdRequest {
-  uint32 can_node_id = 1;
+  DeviceUUID device_uuid = 1; // Target device UUID (routing translates to CAN node ID)
 }
 
 message TerrabootGetIdResponse {

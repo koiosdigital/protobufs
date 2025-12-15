@@ -410,7 +410,7 @@ ringbahn_v1_ModbusReadHoldingRegistersRequest req = {
 // Send request...
 
 // Decode response
-ringbahn_v1_ModbusReadHoldingRegistersResponse resp = 
+ringbahn_v1_ModbusReadHoldingRegistersResponse resp =
   ringbahn_v1_ModbusReadHoldingRegistersResponse_init_zero;
 pb_decode(&stream, ringbahn_v1_ModbusReadHoldingRegistersResponse_fields, &resp);
 
@@ -444,7 +444,7 @@ pb_decode(&stream, ringbahn_v1_CommandResult_fields, &result);
 if (result.success) {
   printf("Successfully wrote %u coils\n", (unsigned)req.values_count);
 } else {
-  printf("Write failed: error_code=%d, detail=%s\n", 
+  printf("Write failed: error_code=%d, detail=%s\n",
          result.error_code, result.detail);
 }
 ```
