@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
+import "common/types.proto";
+
 // ADC device command request
 message ADCCommandRequest {
   // Empty - ADC is read-only, no commands currently supported
@@ -9,8 +11,7 @@ message ADCCommandRequest {
 
 // ADC device command response
 message ADCCommandResponse {
-  bool success = 1;
-  int32 error_code = 2;
+  CommandResult result = 1;
 }
 
 // Single ADC channel reading

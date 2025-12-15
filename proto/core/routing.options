@@ -1,5 +1,0 @@
-ringbahn.v1.StateUpdateResponse.adc_state max_count:16
-ringbahn.v1.StateUpdateResponse.vfd_state max_count:16
-ringbahn.v1.StateUpdateResponse.routing_device_state max_count:16
-ringbahn.v1.StateUpdateResponse.rover_device_state max_count:16
-ringbahn.v1.StateUpdateResponse.digital_output_state max_count:16

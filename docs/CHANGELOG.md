@@ -5,6 +5,25 @@ All notable changes to the Terranova Protocol Buffers will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-15
+
+### Added
+
+- Introduced the Ringbahn binary frame format with CRC16 validation, UART UUID addressing, and documented message ID ranges.
+- Added `devices/device_common.proto` for shared commands (system info, heartbeat, acknowledgements, standard errors).
+- Added `DeviceUUID` and `CommandResult` helper messages to `common/types.proto`, including nanopb sizing constraints.
+
+### Changed
+
+- Removed the `core/` protos and the `RoutableMessage` envelope in favor of device-specific payloads keyed by message IDs.
+- All device protos now import `DeviceUUID` and `CommandResult`, and responses use the shared `CommandResult` structure.
+- Documentation (`README.md`, `docs/PROTOCOL.md`, `docs/QUICK_REFERENCE.md`, `docs/MIGRATION.md`) rewritten to describe Ringbahn framing, device UUIDs, and the new workflow for assigning message IDs.
+- Updated `CMakeLists.txt` to drop references to the old core sources and include the new device_common/digital_output outputs.
+
+### Fixed
+
+- Removed stale references to `device_efc` and the legacy Endpoint structure throughout the docs.
+
 ## [1.0.0] - 2025-12-09
 
 ### Added - Repository Restructuring
@@ -24,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Split monolithic proto files**:
 
   - `terranova.proto` split into:
-    - `common/types.proto` - Common message types (Endpoint, GPSState, DeviceInfo)
+    - `common/types.proto` - Common message types (DeviceUUID, GPSState, DeviceInfo)
     - `core/routing.proto` - Message routing and state management
     - `core/system.proto` - System information and error handling
     - `core/heartbeat.proto` - Keep-alive messages

@@ -1,2 +1,0 @@
-ringbahn.v1.WriteOTADataRequest.data max_size:4096
-ringbahn.v1.ESP32OTAResponse.sha256_hash max_size:32 fixed_length:true

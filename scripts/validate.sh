@@ -17,11 +17,22 @@ fi
 
 # Check if buf is available (optional but recommended)
 USE_BUF=false
-if command -v buf &> /dev/null; then
+BUF_CONFIG=""
+if [ -f "$ROOT_DIR/buf.yaml" ]; then
+    BUF_CONFIG="$ROOT_DIR/buf.yaml"
+elif [ -f "$ROOT_DIR/buf.work.yaml" ]; then
+    BUF_CONFIG="$ROOT_DIR/buf.work.yaml"
+fi
+
+if command -v buf &> /dev/null && [ -n "$BUF_CONFIG" ]; then
     echo "✓ Using buf for enhanced validation"
     USE_BUF=true
 else
-    echo "ℹ️  buf not found, using protoc only (install buf for better validation)"
+    if ! command -v buf &> /dev/null; then
+        echo "ℹ️  buf not found, using protoc only (install buf for better validation)"
+    else
+        echo "ℹ️  buf config not found, using protoc only"
+    fi
 fi
 
 # Find all proto files
@@ -37,14 +48,14 @@ if [ "$USE_BUF" = true ]; then
     echo ""
     echo "🔄 Running buf lint..."
     cd "$ROOT_DIR"
-    buf lint || {
+    buf lint --config "$BUF_CONFIG" || {
         echo "❌ buf lint failed"
         exit 1
     }
     
     echo ""
     echo "🔄 Running buf format check..."
-    buf format --diff --exit-code || {
+    buf format --config "$BUF_CONFIG" --diff --exit-code || {
         echo "⚠️  Formatting issues detected. Run 'buf format -w' to fix."
     }
 else

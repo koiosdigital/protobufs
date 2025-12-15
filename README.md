@@ -13,19 +13,14 @@ protobufs/
 ├── proto/                      # Protocol Buffer definitions
 │   ├── common/                # Shared types and enumerations
 │   │   ├── enums.proto       # Device types and common enums
-│   │   └── types.proto       # Common message types (Endpoint, GPSState, etc.)
-│   ├── core/                  # Core protocol messages
-│   │   ├── routing.proto     # Message routing and state updates
-│   │   ├── system.proto      # System information and error handling
-│   │   └── heartbeat.proto   # Keep-alive messages
-│   ├── services/              # Service-level protocols
-│   │   ├── discovery.proto   # Device discovery and identification
-│   │   └── firmware_update.proto  # Over-the-air firmware updates
-│   └── devices/               # Device-specific protocols
-│       ├── device_adc.proto  # Analog-to-Digital Converter
-│       ├── device_efc.proto  # Electronic Frequency Converter
-│       ├── device_rover.proto # Rover control
-│       └── device_vfd.proto  # Variable Frequency Drive
+│   │   └── types.proto       # Device UUIDs, CommandResult, GPSState, etc.
+│   └── devices/               # Device-specific protocols + shared helpers
+│       ├── device_common.proto      # Shared commands (system info, heartbeat, errors)
+│       ├── device_routing.proto     # UART-to-CAN bridge, discovery, firmware tools
+│       ├── device_adc.proto         # Analog-to-Digital Converter
+│       ├── device_digital_output.proto # PWM/digital outputs
+│       ├── device_rover.proto       # Rover control
+│       └── device_vfd.proto         # Variable Frequency Drive
 ├── generated/                 # Generated code (not committed)
 │   └── nanopb/               # Nanopb C implementations
 ├── docs/                      # Documentation
@@ -150,13 +145,26 @@ See [Protocol Buffers documentation](https://protobuf.dev/) for language-specifi
 
 ## 📖 Protocol Overview
 
-### Message Routing
+### Ringbahn Frames
 
-All messages are wrapped in a `RoutableMessage` which contains:
+All commands and telemetry are sent inside the Ringbahn frame. The base layout is:
 
-- **Source endpoint**: Originating device
-- **Destination endpoint**: Target device
-- **Payload**: The actual command or data (oneof)
+- **0xA5** – Start-of-frame sentinel
+- **uint16 message_id** – Identifies the payload type for a specific device family
+- **uint16 payload_length** – Number of payload bytes (not including CRC)
+- **payload** – Protobuf bytes for the selected message
+- **crc16** – CRC computed over every previous byte, including the 0xA5 sentinel
+
+For UART links we also include addressing:
+
+- **12-byte sender UUID** – Device UUID of the source
+- **12-byte recipient UUID** – Device UUID of the target
+
+This removes the need for a giant envelope message. Each device only imports the proto file that defines the payload it cares about (e.g., `device_adc.proto`).
+
+#### Device UUIDs
+
+`common/types.proto` defines `DeviceUUID`, a fixed 12-byte identifier that mirrors the IDs carried in the Ringbahn header. `DeviceInfo` now contains this UUID along with any legacy short IDs so both discovery flows and payloads speak the same addressing language.
 
 ### Device Types
 
@@ -164,30 +172,45 @@ The system supports multiple device types:
 
 - `DEVICE_TYPE_HUB`: Main hub/coordinator
 - `DEVICE_TYPE_NODE`: Generic node module
+- `DEVICE_TYPE_ROUTING`: UART-to-CAN routing bridge (handles discovery + firmware)
 - `DEVICE_TYPE_ADC`: Analog-to-Digital Converter
-- `DEVICE_TYPE_VFD`: Variable Frequency Drive
+- `DEVICE_TYPE_SD_ADC`: Sigma-delta ADC
+- `DEVICE_TYPE_VFD`: Variable Frequency Drive (legacy field devices)
 - `DEVICE_TYPE_ROVER`: Mobile robot platform
-- `DEVICE_TYPE_EFC`: Electronic Frequency Converter
-- And more...
+- `DEVICE_TYPE_DIGITAL_OUT`: PWM / digital output bridge
+- `DEVICE_TYPE_RS485_BRIDGE`: RS485 transport bridge
+- Additional values can be added as needed in `common/enums.proto`
 
 ### Communication Patterns
 
 1. **Request-Response**: Commands return responses
-2. **State Updates**: Devices broadcast state periodically
+2. **State Updates**: Devices broadcast their `<Device>State` payloads (e.g., `ADCState`, `VFDState`) using their assigned message IDs
 3. **Discovery**: Automatic device detection
 4. **Heartbeat**: Keep-alive mechanism
 
 See [PROTOCOL.md](docs/PROTOCOL.md) for detailed protocol specification.
 
+### Shared Commands
+
+`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `HeartbeatRequest/Response`, `AcknowledgeResponse`, and `ErrorResponse`. These payloads occupy the `0x0000-0x00FF` message ID range so controllers can issue global commands without importing every device proto.
+
+### Routing Device
+
+`proto/devices/device_routing.proto` defines the UART-to-CAN bridge. It now owns every discovery primitive (attached devices, active channel selection) as well as both firmware paths:
+
+- **Internal OTA**: Commands (`InternalOta*`) stream new firmware into the routing MCU and return compact `InternalOtaStatus` updates.
+- **Terraboot CAN bootloader**: `Terraboot*` messages map one-to-one with the Katapult/Terraboot protocol (`connect`, `send_block`, `eof`, `request_block`, `complete`, `get_canbus_id`) so routing firmware can forward frames down the CAN bus without extra wrappers.
+
+All other device protos cover nodes that live exclusively on the CAN bus.
+
 ## 🛠️ Development
 
 ### Adding New Device Types
 
-1. Create a new proto file in `proto/devices/`
-2. Define your message types with package `ringbahn.v1`
-3. Add corresponding entry in `core/routing.proto`
-4. Create a `.options` file for nanopb settings
-5. Update this README
+1. Create a new proto file in `proto/devices/` (or extend `device_common.proto` if the command is shared).
+2. Allocate Ringbahn `message_id` values for the new payloads and document them in `docs/PROTOCOL.md`.
+3. Create a `.options` file for nanopb settings that matches the package name (`ringbahn.v1`).
+4. Update this README and the protocol docs so integrators know which IDs map to which payloads.
 
 ### Breaking Changes
 
@@ -254,6 +277,6 @@ For questions or issues, please open an issue on GitHub or contact the Terranova
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: December 9, 2025  
+**Version**: 1.1.0  
+**Last Updated**: December 15, 2025  
 **Maintainer**: Terranova Team

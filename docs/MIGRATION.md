@@ -1,4 +1,4 @@
-# Migration Guide: Legacy to v1.0.0
+# Migration Guide: Legacy to v1.1.0
 
 This guide helps you migrate from the legacy flat structure to the new organized v1.0.0 structure.
 
@@ -30,16 +30,11 @@ proto/
   ├── common/
   │   ├── enums.proto
   │   └── types.proto
-  ├── core/
-  │   ├── routing.proto
-  │   ├── system.proto
-  │   └── heartbeat.proto
-  ├── services/
-  │   ├── discovery.proto
-  │   └── firmware_update.proto
   └── devices/
+  ├── device_common.proto
+  ├── device_routing.proto
       ├── device_adc.proto
-      ├── device_efc.proto
+  ├── device_digital_output.proto
       ├── device_rover.proto
       └── device_vfd.proto
 generated/
@@ -105,26 +100,46 @@ Or use the provided script:
 **New includes**:
 
 ```c
-#include "core/routing.pb.h"
+#include "devices/device_common.pb.h"
 #include "devices/device_adc.pb.h"
-#include "services/discovery.pb.h"
+#include "devices/device_digital_output.pb.h"
+#include "devices/device_routing.pb.h"
 #include "common/types.pb.h"
 #include "common/enums.pb.h"
 ```
 
-**Old type references**:
+**Frame assembly**:
 
 ```c
-ringbahn_DeviceType device_type = ringbahn_DEVICE_TYPE_ADC;
-ringbahn_RoutableMessage msg = ringbahn_RoutableMessage_init_zero;
+typedef struct __attribute__((packed)) {
+  uint8_t start;
+  uint16_t message_id;
+  uint16_t payload_len;
+  uint8_t sender_uuid[12];
+  uint8_t recipient_uuid[12];
+  uint8_t payload[256];
+  uint16_t crc;
+} ringbahn_frame_t;
+
+ringbahn_v1_SystemInfoRequest req = ringbahn_v1_SystemInfoRequest_init_zero;
+uint8_t payload[sizeof(((ringbahn_frame_t *)0)->payload)];
+
+pb_ostream_t stream = pb_ostream_from_buffer(payload, sizeof(payload));
+PB_ASSERT(pb_encode(&stream, ringbahn_v1_SystemInfoRequest_fields, &req));
+
+ringbahn_frame_t frame = {
+  .start = 0xA5,
+  .message_id = 0x0100, // Allocated ID for SystemInfoRequest
+  .payload_len = (uint16_t)stream.bytes_written,
+};
+memcpy(frame.sender_uuid, my_uuid, sizeof(frame.sender_uuid));
+memcpy(frame.recipient_uuid, target_uuid, sizeof(frame.recipient_uuid));
+memcpy(frame.payload, payload, frame.payload_len);
+frame.crc = ringbahn_crc16((uint8_t *)&frame,
+               offsetof(ringbahn_frame_t, payload) + frame.payload_len);
 ```
 
-**New type references**:
-
-```c
-ringbahn_v1_DeviceType device_type = ringbahn_v1_DEVICE_TYPE_ADC;
-ringbahn_v1_RoutableMessage msg = ringbahn_v1_RoutableMessage_init_zero;
-```
+Decode by validating the CRC, choosing the correct `message_id`, and invoking `pb_decode` with the matching protobuf descriptor (e.g., `ringbahn_v1_SystemInfoResponse_fields`).
 
 #### Python Code
 
@@ -139,22 +154,37 @@ import device_adc_pb2
 
 ```python
 from common import enums_pb2, types_pb2
-from core import routing_pb2, system_pb2
-from devices import device_adc_pb2
+from devices import (
+  device_common_pb2,
+  device_adc_pb2,
+  device_digital_output_pb2,
+  device_routing_pb2,
+)
 ```
 
-**Old usage**:
+**Usage**:
 
 ```python
-msg = ringbahn_pb2.RoutableMessage()
-device = ringbahn_pb2.DEVICE_TYPE_ADC
-```
+import struct
 
-**New usage**:
+req = device_common_pb2.SystemInfoRequest()
+payload = req.SerializeToString()
 
-```python
-msg = routing_pb2.RoutableMessage()
-device = enums_pb2.DEVICE_TYPE_ADC
+frame = bytearray()
+frame.append(0xA5)
+frame += struct.pack('<HH', 0x0100, len(payload))
+frame += sender_uuid_bytes  # 12 bytes
+frame += recipient_uuid_bytes  # 12 bytes
+frame += payload
+frame += struct.pack('<H', crc16(frame))
+
+# Decode
+message_id, length = struct.unpack_from('<HH', frame, 1)
+payload = frame[1 + 2 + 2 + 12 + 12 : 1 + 2 + 2 + 12 + 12 + length]
+
+if message_id == 0x8100:
+  resp = device_common_pb2.SystemInfoResponse()
+  resp.ParseFromString(payload)
 ```
 
 ### 3. Update Nanopb Options
@@ -279,5 +309,5 @@ If you encounter issues during migration:
 
 ---
 
-**Last Updated**: December 9, 2025  
-**Applies to**: Migration from legacy to v1.0.0
+**Last Updated**: December 15, 2025  
+**Applies to**: Migration from legacy to v1.1.0

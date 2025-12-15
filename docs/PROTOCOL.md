@@ -6,33 +6,54 @@ The Terranova protocol is a binary message-passing protocol designed for distrib
 
 ## Protocol Version
 
-**Current Version**: 1.0 (`ringbahn.v1`)
+**Current Version**: 1.2 (`ringbahn.v1`)
 
 ## Architecture
 
-### Message Routing
+### Ringbahn Frame
 
-All protocol messages are wrapped in a `RoutableMessage` envelope that provides source and destination addressing:
+Ringbahn replaces the monolithic envelope message with a binary frame that keeps routing information outside the protobuf payload. Every frame uses the same base layout:
 
-```protobuf
-message RoutableMessage {
-  Endpoint source = 1;        // Originating device
-  Endpoint destination = 2;   // Target device
-  oneof payload { ... }       // Actual message content
-}
-```
+| Field            | Size    | Description                                   |
+| ---------------- | ------- | --------------------------------------------- |
+| `0xA5`           | 1 byte  | Start-of-frame sentinel                       |
+| `message_id`     | 2 bytes | Identifies the protobuf payload type          |
+| `payload_length` | 2 bytes | Length of the payload bytes                   |
+| `payload`        | N bytes | Serialized protobuf message                   |
+| `crc16`          | 2 bytes | CRC-16 over every previous byte, incl. `0xA5` |
 
-### Endpoints
+#### UART Variant with Device UUIDs
 
-An endpoint uniquely identifies a device in the Terranova network:
+UART transports add two 12-byte fields ahead of the payload:
 
-```protobuf
-message Endpoint {
-  bytes mcu_id = 1;  // 16-byte unique MCU identifier
-}
-```
+1. **Sender UUID** – 12-byte `DeviceUUID` identifying the originator
+2. **Recipient UUID** – 12-byte `DeviceUUID` identifying the target
 
-The `mcu_id` is typically the device's hardware serial number or MAC address.
+This keeps routing metadata standardized while still allowing other transports (CAN, SPI, etc.) to omit the UUIDs if the link already encodes addressing.
+
+#### Validating Frames
+
+The CRC16 is computed over the sentinel, message ID, payload length, UUID fields (if present), and payload. Receivers MUST validate the CRC before attempting to parse the payload.
+
+### Device UUIDs
+
+`common/types.proto` now defines `DeviceUUID`, a fixed 12-byte identifier referenced by both the transport header and higher-level payloads such as `DeviceInfo`. UUIDs stay stable for the lifetime of the device and replace the older "Endpoint" structure.
+
+### Ringbahn Message IDs
+
+Message IDs provide the only hint the decoder needs to pick the correct protobuf type. We reserve ranges per subsystem so devices never collide:
+
+| Range           | Purpose                                             |
+| --------------- | --------------------------------------------------- |
+| `0x0000-0x00FF` | `device_common` (system info, heartbeat, error/ack) |
+| `0x0100-0x01FF` | ADC commands and state                              |
+| `0x0200-0x02FF` | Digital output commands and state                   |
+| `0x0300-0x03FF` | VFD commands and state                              |
+| `0x0400-0x04FF` | Rover commands and state                            |
+| `0x0500-0x05FF` | Routing bridge (discovery + firmware)               |
+| `0x8000-0x8FFF` | Response IDs (high bit set)                         |
+
+Responses typically mirror the request ID with bit 15 set (example: request `0x0101`, response `0x8101`). When you add a new payload, pick the next unused value in the correct range and document it here.
 
 ## Communication Patterns
 
@@ -47,30 +68,24 @@ Client ← [Response] ← Device
 
 Example: System Information Query
 
-```protobuf
-// Request
-SystemInfoRequest system_info_req = 3;
-
-// Response
-SystemInfoResponse system_info_res = 4;
 ```
+Controller → Frame[message_id=0x0100, payload=SystemInfoRequest]
+Controller ← Frame[message_id=0x8100, payload=SystemInfoResponse]
+```
+
+Message IDs are assigned per device family. The high bit is typically used to distinguish requests (`0x0xxx`) from responses (`0x8xxx`), but the transport only cares that both peers agree on the mapping described in this document.
 
 ### 2. State Updates
 
-Devices can broadcast their state periodically or on-demand:
-
-```
-Controller → [StateUpdateRequest] → Device
-Controller ← [StateUpdateResponse] ← Device
-```
+Each device file defines its own `State` payload (e.g., `ADCState`, `VFDState`). Controllers either poll by sending the device-specific state request ID or listen for unsolicited frames when the firmware publishes on its own interval.
 
 ### 3. Discovery
 
 The discovery protocol allows dynamic device detection:
 
-1. **Identify Active Device**: Query which device is currently active on a channel
-2. **Attached Devices**: List all devices connected to a hub
-3. **Set Channel Identity**: Configure channel assignments
+1. **RoutingIdentifyActiveDeviceRequest/Response** – Reports the device currently bridged to the UART session.
+2. **RoutingAttachedDevicesRequest/Response** – Returns the full list of devices (as `DeviceInfo`) detected on the CAN bus.
+3. **RoutingSetChannelIdentityRequest/Response** – Activates or deactivates CAN channels from the routing firmware.
 
 ### 4. Heartbeat
 
@@ -89,6 +104,7 @@ HeartbeatResponse ← Device (with timestamp)
 | -------------------------- | ----- | ------------------------------------- |
 | `DEVICE_TYPE_HUB`          | 1     | Main hub/coordinator                  |
 | `DEVICE_TYPE_NODE`         | 2     | Generic node module                   |
+| `DEVICE_TYPE_ROUTING`      | 3     | UART-to-CAN routing bridge            |
 | `DEVICE_TYPE_ADC`          | 4     | Analog-to-Digital Converter           |
 | `DEVICE_TYPE_SD_ADC`       | 5     | Sigma-Delta ADC                       |
 | `DEVICE_TYPE_VFD`          | 6     | Variable Frequency Drive (deprecated) |
@@ -97,6 +113,47 @@ HeartbeatResponse ← Device (with timestamp)
 | `DEVICE_TYPE_RS485_BRIDGE` | 9     | RS485 communication bridge            |
 
 ## Device-Specific Protocols
+
+`proto/devices/device_common.proto` contains helper payloads shared by every device:
+
+- `SystemInfoRequest` / `SystemInfoResponse` – queries hardware/software metadata and returns `DeviceInfo` (with device UUID).
+- `HeartbeatRequest` / `HeartbeatResponse` – lightweight liveness checks.
+- `AcknowledgeResponse` and `ErrorResponse` – minimalist success/error replies.
+
+Use these message IDs for global commands, then layer device-specific commands alongside them in the same Ringbahn namespace.
+
+### Routing Device (UART-to-CAN Bridge)
+
+Routing devices (DeviceType `DEVICE_TYPE_ROUTING`) terminate the UART Ringbahn link and fan commands out to the CAN bus. Their proto covers three areas:
+
+- **State**: `RoutingDeviceState` reports overall CAN health (connected node count and optional `GPSState`).
+- **Discovery**: `RoutingAttachedDevices*`, `RoutingIdentifyActiveDevice*`, and `RoutingSetChannelIdentity*` replace the legacy discovery service. All results are expressed as `DeviceInfo` structs so controllers can match UUIDs to the Ringbahn header.
+- **Firmware**:
+  - `InternalOta*` commands update the routing MCU itself and return compact `InternalOtaStatus` structures.
+  - `Terraboot*` commands map 1:1 to the [Terraboot/Katapult protocol](https://github.com/Levitree/terraboot/blob/master/protocol.md): `connect (0x11)`, `send_block (0x12)`, `eof (0x13)`, `request_block (0x14)`, `complete (0x15)`, and `get_canbus_id (0x16)`. Each request includes the destination CAN node ID plus the exact payload required by the bootloader, and every response echoes structured data (protocol version, block offsets, UUIDs, etc.) via `CommandResult` fields.
+
+All other devices now live exclusively on CAN, so the routing bridge is the single place where the UART host performs discovery or firmware management.
+
+#### Discovery Flow
+
+1. Issue `RoutingAttachedDevicesRequest` to audit the full CAN roster. The response returns up to 32 `DeviceInfo` entries including UUID, type, and firmware version pulled from each node's `SystemInfoResponse`.
+2. Use `RoutingIdentifyActiveDeviceRequest` to confirm which CAN node is currently bound to the UART session (useful while cycling multiple channels through one bridge).
+3. Toggle buses by sending `RoutingSetChannelIdentityRequest` with a `channel` index and `active` flag. This is the declarative replacement for the old `SetChannelIdentityRequest` service call.
+
+#### Firmware Update Flow
+
+- **Internal OTA (Routing Firmware)**
+
+  1. Send `InternalOtaBeginRequest` with the total image size and firmware version.
+  2. Stream chunks with `InternalOtaWriteRequest` (≤4096 bytes each) until `InternalOtaStatus.next_offset` reaches `image_size`.
+  3. Finalize via `InternalOtaEndRequest` to trigger optional SHA-256 validation, or `InternalOtaAbortRequest` to roll back. `InternalOtaSetBootPartitionRequest` only needs to run after a successful upload when you want to boot the new slot.
+
+- **Terraboot CAN Bridge**
+  1. Connect to the target node with `TerrabootConnectRequest` (Terraboot `0x11`). Read block size/start address from the response.
+  2. Loop over `TerrabootSendBlockRequest` (0x12) with up to 256 bytes per block. The response echoes the accepted address, enabling retransmit logic.
+  3. Once all blocks are delivered, call `TerrabootEofRequest` (0x13) then `TerrabootCompleteRequest` (0x15) to finalize the flash session.
+  4. If a node requests retransmission, issue `TerrabootRequestBlockRequest` (0x14) to fetch the offending chunk from the bridge cache.
+  5. Use `TerrabootGetIdRequest` (0x16) any time you need the Terraboot CAN UUID to reconcile with inventory systems.
 
 ### ADC (Analog-to-Digital Converter)
 
@@ -156,77 +213,28 @@ message VFDState {
 ```protobuf
 message RoverMovementCommand {
   bool tracks_active = 1;
-  int32 left_right = 2;        // 0-100, 50=stopped
-  int32 forward_backward = 3;   // 0-100, 50=stopped
+  sint32 left_right = 2;        // -100..100 steering input
+  sint32 forward_backward = 3;  // -100..100 throttle input
 }
 ```
 
-### EFC (Electronic Frequency Converter)
+### Digital Output
 
-**Purpose**: Control frequency converter channels
+**Purpose**: Drive PWM or simple on/off outputs.
 
 **Messages**:
 
 ```protobuf
-message EFCChannelValue {
-  int32 channel_number = 1;
-  int32 efc_value_pct = 2;  // 0-100%
+message PWMChannelValue {
+  int32 channel_number = 1; // 0-7
+  int32 duty_cycle_pct = 2; // 0-100
+  int32 frequency_hz = 3;   // Optional override, 0=default
+}
+
+message DigitalOutputState {
+  repeated PWMChannelValue values = 1; // Up to 8 channels
 }
 ```
-
-## Services
-
-### Discovery Service
-
-**Purpose**: Automatic device detection and identification
-
-**Operations**:
-
-1. **List Attached Devices**:
-
-   ```protobuf
-   AttachedDevicesRequest → Hub
-   AttachedDevicesResponse ← Hub (list of DeviceInfo)
-   ```
-
-2. **Identify Active Device**:
-
-   ```protobuf
-   IdentifyActiveDeviceRequest → Hub
-   DeviceInfo ← Hub
-   ```
-
-3. **Set Channel Identity**:
-   ```protobuf
-   SetChannelIdentityRequest → Hub
-   (activates/deactivates channel)
-   ```
-
-### Firmware Update Service
-
-**Purpose**: Over-the-air firmware updates
-
-**Flow**:
-
-1. **Start Update**:
-
-   ```protobuf
-   StartUpdateRequest (total_size, firmware_version)
-   ```
-
-2. **Send Data Blocks**:
-
-   ```protobuf
-   UpdateDataBlockRequest (data_block, block_offset, block_size)
-   // Repeat for all blocks
-   ```
-
-3. **Finish Update**:
-   ```protobuf
-   FinishUpdateRequest (do_reboot, checksum)
-   ```
-
-Each step returns a `FirmwareUpdateResponse` with success status and progress information.
 
 ## Error Handling
 
@@ -238,12 +246,23 @@ Each step returns a `FirmwareUpdateResponse` with success status and progress in
 message AcknowledgeResponse {}
 ```
 
-**Error Response**: Detailed error information
+**CommandResult**: Embedded inside most device responses
+
+```protobuf
+message CommandResult {
+  bool success = 1;
+  int32 error_code = 2;
+  string detail = 3;
+}
+```
+
+**Error Response**: Detailed error information for asynchronous faults
 
 ```protobuf
 message ErrorResponse {
-  string error_message = 1;
-  int32 error_code = 2;
+  int32 error_code = 1;
+  int64 timestamp_ms = 2;
+  string detail = 3;
 }
 ```
 
@@ -263,16 +282,20 @@ Error codes are application-specific but follow these conventions:
 
 The protocol uses nanopb for embedded C generation with the following constraints:
 
-| Field                                  | Max Size  | Notes          |
-| -------------------------------------- | --------- | -------------- |
-| `Endpoint.mcu_id`                      | 16 bytes  | Fixed length   |
-| `SystemInfoResponse.hardware_codename` | 32 bytes  | Fixed length   |
-| `SystemInfoResponse.software_codename` | 32 bytes  | Fixed length   |
-| `ErrorResponse.error_message`          | 64 bytes  | Fixed length   |
-| `ADCState.values`                      | 8 items   | Array          |
-| `EFCState.values`                      | 8 items   | Array          |
-| `AttachedDevicesResponse.devices`      | 32 items  | Array          |
-| `UpdateDataBlockRequest.data_block`    | 256 bytes | Firmware chunk |
+| Field                                       | Max Size   | Notes                      |
+| ------------------------------------------- | ---------- | -------------------------- |
+| `DeviceUUID.value`                          | 12 bytes   | Fixed length               |
+| `CommandResult.detail`                      | 64 bytes   | Optional string            |
+| `DigitalOutputState.values`                 | 8 items    | Array                      |
+| `ADCState.values`                           | 8 items    | Array                      |
+| `RoutingAttachedDevicesResponse.devices`    | 32 items   | Array                      |
+| `InternalOtaWriteRequest.data`              | 4096 bytes | Firmware chunk             |
+| `InternalOtaStatus.sha256_hash`             | 32 bytes   | Fixed length digest        |
+| `TerrabootSendBlockRequest.data`            | 256 bytes  | Terraboot block payload    |
+| `TerrabootRequestBlockResponse.data`        | 256 bytes  | Terraboot block payload    |
+| `TerrabootConnectResponse.mcu_type`         | 32 bytes   | Null-terminated string     |
+| `TerrabootConnectResponse.software_version` | 64 bytes   | Null-terminated string     |
+| `TerrabootGetIdResponse.can_uuid`           | 12 bytes   | Terraboot padded 6-byte ID |
 
 ### GPS Data
 
@@ -280,13 +303,12 @@ For devices with GPS capabilities:
 
 ```protobuf
 message GPSState {
-  bool has_gps = 1;
-  double latitude = 2;      // degrees
-  double longitude = 3;     // degrees
-  float altitude = 4;       // meters
-  float speed = 5;          // m/s
-  float heading = 6;        // degrees
-  int32 satellites = 7;     // count
+  double latitude = 1;      // degrees
+  double longitude = 2;     // degrees
+  float altitude = 3;       // meters
+  float speed = 4;          // m/s
+  float heading = 5;        // degrees
+  int32 satellites = 6;     // count
 }
 ```
 
@@ -304,10 +326,9 @@ message GPSState {
 To add new device types or commands:
 
 1. Create new proto file in appropriate subdirectory
-2. Add to `RoutableMessage` payload oneof
-3. Assign unique field numbers (never reuse)
-4. Add corresponding `.options` file for nanopb
-5. Update documentation
+2. Assign a unique `message_id` (see Ringbahn ID table below) and reserve it in firmware
+3. Add corresponding `.options` file for nanopb
+4. Update documentation (README + this file) with the new ID and payload description
 
 ### Breaking Changes
 

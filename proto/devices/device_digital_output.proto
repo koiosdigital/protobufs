@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
+import "common/types.proto";
+
 // Digital Output (PWM) device command request
 message DigitalOutputCommandRequest {
   PWMChannelValue set_channel_value = 1;
@@ -9,8 +11,7 @@ message DigitalOutputCommandRequest {
 
 // Digital Output device command response
 message DigitalOutputCommandResponse {
-  bool success = 1;
-  int32 error_code = 2;
+  CommandResult result = 1;
 }
 
 // Single PWM channel configuration

@@ -6,9 +6,7 @@
 protobufs/
 ├── proto/
 │   ├── common/          → Shared types (enums, types)
-│   ├── core/            → Core protocol (routing, system, heartbeat)
-│   ├── services/        → Services (discovery, firmware_update)
-│   └── devices/         → Devices (adc, efc, rover, vfd)
+│   └── devices/         → Devices (common helpers + routing, adc, digital_output, rover, vfd)
 ├── generated/nanopb/    → Generated C code (gitignored)
 ├── docs/                → Documentation
 ├── scripts/             → Build scripts
@@ -42,25 +40,37 @@ make
 ### Common (`proto/common/`)
 
 - **enums.proto**: DeviceType enum
-- **types.proto**: Endpoint, GPSState, DeviceInfo
-
-### Core (`proto/core/`)
-
-- **routing.proto**: RoutableMessage, StateUpdateRequest/Response
-- **system.proto**: SystemInfoRequest/Response, ErrorResponse
-- **heartbeat.proto**: HeartbeatRequest/Response
-
-### Services (`proto/services/`)
-
-- **discovery.proto**: Device discovery protocol
-- **firmware_update.proto**: OTA firmware updates
+- **types.proto**: DeviceUUID, CommandResult, DeviceInfo, GPSState
 
 ### Devices (`proto/devices/`)
 
+- **device_common.proto**: Shared commands (system info, heartbeat, errors)
+- **device_routing.proto**: UART-to-CAN routing bridge (discovery + firmware)
 - **device_adc.proto**: Analog-to-Digital Converter
-- **device_efc.proto**: Electronic Frequency Converter
+- **device_digital_output.proto**: PWM / digital outputs
 - **device_rover.proto**: Rover movement control
 - **device_vfd.proto**: Variable Frequency Drive
+
+## Ringbahn Frame Cheatsheet
+
+- `0xA5` start byte
+- `uint16 message_id`
+- `uint16 payload_len`
+- `sender_uuid` + `recipient_uuid` (12 bytes each) on UART
+- `payload` bytes (protobuf message)
+- `crc16` over everything above
+
+Message ID ranges:
+
+| Range           | Purpose                        |
+| --------------- | ------------------------------ |
+| `0x0000-0x00FF` | device_common                  |
+| `0x0100-0x01FF` | ADC                            |
+| `0x0200-0x02FF` | Digital output                 |
+| `0x0300-0x03FF` | VFD                            |
+| `0x0400-0x04FF` | Rover                          |
+| `0x0500-0x05FF` | Routing (discovery + firmware) |
+| `0x8000-0x8FFF` | Responses (high bit set)       |
 
 ## Common Message Patterns
 
@@ -73,10 +83,7 @@ SystemInfoResponse ← Device
 
 ### State Updates
 
-```protobuf
-StateUpdateRequest → Device
-StateUpdateResponse ← Device (with device-specific state)
-```
+Device publishes frames whose payload is `<Device>State` (ADCState, VFDState, etc.) using its allocated message ID. Controllers can passively listen or send the device's "state request" ID if a poll is required.
 
 ### Device Commands
 
@@ -93,7 +100,7 @@ All types use the versioned package: `ringbahn.v1`
 
 ```c
 ringbahn_v1_DeviceType
-ringbahn_v1_RoutableMessage
+ringbahn_v1_DeviceUUID
 ringbahn_v1_ADCState
 ```
 
@@ -101,7 +108,7 @@ ringbahn_v1_ADCState
 
 ```python
 enums_pb2.DeviceType
-routing_pb2.RoutableMessage
+device_common_pb2.SystemInfoRequest
 device_adc_pb2.ADCState
 ```
 
@@ -110,10 +117,10 @@ device_adc_pb2.ADCState
 ```protobuf
 import "common/enums.proto";
 import "common/types.proto";
-import "core/routing.proto";
-import "core/system.proto";
-import "services/discovery.proto";
+import "devices/device_common.proto";
+import "devices/device_routing.proto";
 import "devices/device_adc.proto";
+import "devices/device_digital_output.proto";
 ```
 
 ## Nanopb Options Format
@@ -129,27 +136,13 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 | ------------ | ----- | ------------------------------------- |
 | HUB          | 1     | Main hub                              |
 | NODE         | 2     | Node module                           |
+| ROUTING      | 3     | UART-to-CAN routing bridge            |
 | ADC          | 4     | Analog-to-Digital Converter           |
 | SD_ADC       | 5     | Sigma-Delta ADC                       |
 | VFD          | 6     | Variable Frequency Drive (deprecated) |
 | ROVER        | 7     | Mobile robot                          |
 | DIGITAL_OUT  | 8     | Digital output                        |
 | RS485_BRIDGE | 9     | RS485 bridge                          |
-
-## Common Field Numbers
-
-### RoutableMessage
-
-- source: 1
-- destination: 2
-- payload: 3+ (oneof)
-
-### Standard Responses
-
-- heartbeat: 251
-- heartbeat_response: 252
-- acknowledge_response: 253
-- error_response: 254
 
 ## Useful Scripts
 
@@ -199,9 +192,9 @@ ringbahn.v1.MessageName.field_name max_size:N fixed_length:true
 
 ## Version Information
 
-- **Current Version**: 1.0.0
+- **Current Version**: 1.1.0
 - **Package**: ringbahn.v1
-- **Last Updated**: December 9, 2025
+- **Last Updated**: December 15, 2025
 
 ## Quick Links
 

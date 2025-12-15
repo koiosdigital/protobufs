@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
+import "common/types.proto";
+
 // VFD device command request
 message VFDCommandRequest {
   oneof command {
@@ -14,8 +16,7 @@ message VFDCommandRequest {
 
 // VFD device command response
 message VFDCommandResponse {
-  bool success = 1;
-  int32 error_code = 2;
+  CommandResult result = 1;
 }
 
 // Complete VFD device state

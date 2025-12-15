@@ -1,0 +1,8 @@
+ringbahn.v1.RoutingAttachedDevicesResponse.devices max_count:32
+ringbahn.v1.InternalOtaWriteRequest.data max_size:4096
+ringbahn.v1.InternalOtaStatus.sha256_hash max_size:32 fixed_length:true
+ringbahn.v1.TerrabootSendBlockRequest.data max_size:256
+ringbahn.v1.TerrabootRequestBlockResponse.data max_size:256
+ringbahn.v1.TerrabootConnectResponse.mcu_type max_size:32
+ringbahn.v1.TerrabootConnectResponse.software_version max_size:64
+ringbahn.v1.TerrabootGetIdResponse.can_uuid max_size:12
