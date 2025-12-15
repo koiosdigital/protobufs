@@ -2,16 +2,25 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "common/types.proto";
+import "devices/device_common.proto";
 
-// ADC device command request
-message ADCCommandRequest {
-  // Empty - ADC is read-only, no commands currently supported
+// Top-level ADC device command message
+message ADCDeviceCommand {
+  oneof command {
+    // Common commands
+    SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
+    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    
+    // ADC-specific commands
+    ADCGetStateRequest get_state = 10; // Response: ADCState
+  }
 }
 
-// ADC device command response
-message ADCCommandResponse {
-  CommandResult result = 1;
+// ===== ADC-Specific Commands =====
+
+// Response: ADCState
+message ADCGetStateRequest {
+  // Empty - reads all channels
 }
 
 // Single ADC channel reading

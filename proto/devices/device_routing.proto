@@ -3,6 +3,42 @@ syntax = "proto3";
 package ringbahn.v1;
 
 import "common/types.proto";
+import "devices/device_common.proto";
+
+// Top-level Routing device command message
+message RoutingDeviceCommand {
+  oneof command {
+    // Common commands
+    SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
+    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    
+    // Discovery commands
+    RoutingAttachedDevicesRequest attached_devices = 10; // Response: RoutingAttachedDevicesResponse
+    RoutingIdentifyActiveDeviceRequest identify = 11; // Response: RoutingIdentifyActiveDeviceResponse
+    RoutingSetChannelIdentityRequest set_channel = 12; // Response: AcknowledgeResponse
+    RoutingGetStateRequest get_state = 13; // Response: RoutingDeviceState
+    
+    // Internal OTA commands
+    InternalOtaBeginRequest ota_begin = 20; // Response: InternalOtaStatus
+    InternalOtaWriteRequest ota_write = 21; // Response: InternalOtaStatus
+    InternalOtaEndRequest ota_end = 22; // Response: InternalOtaStatus
+    InternalOtaAbortRequest ota_abort = 23; // Response: InternalOtaStatus
+    InternalOtaSetBootPartitionRequest ota_set_boot = 24; // Response: InternalOtaStatus
+    
+    // Terraboot CAN bootloader commands
+    TerrabootConnectRequest terraboot_connect = 30; // Response: TerrabootConnectResponse
+    TerrabootSendBlockRequest terraboot_send = 31; // Response: TerrabootSendBlockResponse
+    TerrabootEofRequest terraboot_eof = 32; // Response: TerrabootEofResponse
+    TerrabootRequestBlockRequest terraboot_request = 33; // Response: TerrabootRequestBlockResponse
+    TerrabootCompleteRequest terraboot_complete = 34; // Response: TerrabootCompleteResponse
+    TerrabootGetIdRequest terraboot_get_id = 35; // Response: TerrabootGetIdResponse
+  }
+}
+
+// ===== Routing-Specific Messages =====
+
+// Response: RoutingDeviceState
+message RoutingGetStateRequest {}
 
 // State published by the routing bridge.
 message RoutingDeviceState {
@@ -12,72 +48,74 @@ message RoutingDeviceState {
 
 // ===== Discovery Commands =====
 
+// Response: RoutingAttachedDevicesResponse
 message RoutingAttachedDevicesRequest {}
 
 message RoutingAttachedDevicesResponse {
-  CommandResult result = 1;
-  repeated DeviceInfo devices = 2;
+  repeated DeviceInfo devices = 1;
 }
 
+// Response: RoutingIdentifyActiveDeviceResponse
 message RoutingIdentifyActiveDeviceRequest {}
 
 message RoutingIdentifyActiveDeviceResponse {
-  CommandResult result = 1;
-  DeviceInfo device = 2; // Active device routed to the UART session
+  DeviceInfo device = 1; // Active device routed to the UART session
 }
 
+// Response: AcknowledgeResponse
 message RoutingSetChannelIdentityRequest {
   int32 channel = 1;
   bool active = 2;
 }
 
-message RoutingSetChannelIdentityResponse {
-  CommandResult result = 1;
-}
-
 // ===== Internal OTA (Routing firmware) =====
 
+// Response: InternalOtaStatus
 message InternalOtaBeginRequest {
   uint32 image_size = 1; // Total firmware size in bytes
   uint32 firmware_version = 2; // Monotonic firmware version number
 }
 
+// Response: InternalOtaStatus
 message InternalOtaWriteRequest {
   bytes data = 1; // Firmware chunk
   uint32 offset = 2; // Byte offset within the image
 }
 
+// Response: InternalOtaStatus
 message InternalOtaEndRequest {
   bool validate_sha256 = 1;
 }
 
+// Response: InternalOtaStatus
 message InternalOtaAbortRequest {}
 
+// Response: InternalOtaStatus
 message InternalOtaSetBootPartitionRequest {}
 
 message InternalOtaStatus {
-  CommandResult result = 1;
-  uint32 bytes_written = 2;
-  uint32 free_space = 3;
-  bytes sha256_hash = 4;
-  uint32 next_offset = 5;
+  uint32 bytes_written = 1;
+  uint32 free_space = 2;
+  bytes sha256_hash = 3;
+  uint32 next_offset = 4;
 }
 
 // ===== Terraboot-compatible CAN bootloader bridge =====
 
+// Response: TerrabootConnectResponse
 message TerrabootConnectRequest {
   uint32 can_node_id = 1; // Destination CAN node ID
 }
 
 message TerrabootConnectResponse {
-  CommandResult result = 1;
-  uint32 protocol_version = 2;
-  uint32 start_address = 3;
-  uint32 block_size = 4;
-  string mcu_type = 5;
-  string software_version = 6;
+  uint32 protocol_version = 1;
+  uint32 start_address = 2;
+  uint32 block_size = 3;
+  string mcu_type = 4;
+  string software_version = 5;
 }
 
+// Response: TerrabootSendBlockResponse
 message TerrabootSendBlockRequest {
   uint32 can_node_id = 1;
   uint32 block_address = 2;
@@ -85,43 +123,43 @@ message TerrabootSendBlockRequest {
 }
 
 message TerrabootSendBlockResponse {
-  CommandResult result = 1;
-  uint32 block_address = 2;
+  uint32 block_address = 1;
 }
 
+// Response: TerrabootEofResponse
 message TerrabootEofRequest {
   uint32 can_node_id = 1;
 }
 
 message TerrabootEofResponse {
-  CommandResult result = 1;
-  uint32 page_count = 2;
+  uint32 page_count = 1;
 }
 
+// Response: TerrabootRequestBlockResponse
 message TerrabootRequestBlockRequest {
   uint32 can_node_id = 1;
   uint32 block_address = 2;
 }
 
 message TerrabootRequestBlockResponse {
-  CommandResult result = 1;
-  uint32 block_address = 2;
-  bytes data = 3;
+  uint32 block_address = 1;
+  bytes data = 2;
 }
 
+// Response: TerrabootCompleteResponse
 message TerrabootCompleteRequest {
   uint32 can_node_id = 1;
 }
 
 message TerrabootCompleteResponse {
-  CommandResult result = 1;
+  // Empty - success indicated by no error
 }
 
+// Response: TerrabootGetIdResponse
 message TerrabootGetIdRequest {
   uint32 can_node_id = 1;
 }
 
 message TerrabootGetIdResponse {
-  CommandResult result = 1;
-  bytes can_uuid = 2; // 6 byte CAN UUID (padded by terraboot)
+  bytes can_uuid = 1; // 6 byte CAN UUID (padded by terraboot)
 }

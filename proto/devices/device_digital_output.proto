@@ -2,17 +2,30 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "common/types.proto";
+import "devices/device_common.proto";
 
-// Digital Output (PWM) device command request
-message DigitalOutputCommandRequest {
-  PWMChannelValue set_channel_value = 1;
+// Top-level Digital Output device command message
+message DigitalOutputDeviceCommand {
+  oneof command {
+    // Common commands
+    SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
+    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    
+    // Digital Output-specific commands
+    SetPWMChannelRequest set_channel = 10; // Response: AcknowledgeResponse
+    DigitalOutputGetStateRequest get_state = 11; // Response: DigitalOutputState
+  }
 }
 
-// Digital Output device command response
-message DigitalOutputCommandResponse {
-  CommandResult result = 1;
+// ===== Digital Output-Specific Commands =====
+
+// Response: AcknowledgeResponse
+message SetPWMChannelRequest {
+  PWMChannelValue channel = 1;
 }
+
+// Response: DigitalOutputState
+message DigitalOutputGetStateRequest {}
 
 // Single PWM channel configuration
 message PWMChannelValue {

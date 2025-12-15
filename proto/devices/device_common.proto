@@ -5,7 +5,10 @@ package ringbahn.v1;
 import "common/enums.proto";
 import "common/types.proto";
 
+// ===== Common Commands (shared by all devices) =====
+
 // Request for system information shared by all devices
+// Response: SystemInfoResponse
 message SystemInfoRequest {
   // Empty - no parameters needed
 }
@@ -22,6 +25,7 @@ message SystemInfoResponse {
 }
 
 // Request for heartbeat (keep-alive)
+// Response: HeartbeatResponse
 message HeartbeatRequest {
   // Empty - simple ping
 }

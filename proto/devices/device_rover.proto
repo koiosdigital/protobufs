@@ -2,19 +2,25 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "common/types.proto";
+import "devices/device_common.proto";
 
-// Rover device command request
-message RoverCommandRequest {
+// Top-level Rover device command message
+message RoverDeviceCommand {
   oneof command {
-    RoverMovementCommand movement_command = 1;
+    // Common commands
+    SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
+    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    
+    // Rover-specific commands
+    RoverMovementCommand movement = 10; // Response: AcknowledgeResponse
+    RoverGetStateRequest get_state = 11; // Response: RoverDeviceState
   }
 }
 
-// Rover device command response
-message RoverCommandResponse {
-  CommandResult result = 1;
-}
+// ===== Rover-Specific Commands =====
+
+// Response: RoverDeviceState
+message RoverGetStateRequest {}
 
 // Current rover device state
 message RoverDeviceState {
@@ -24,7 +30,7 @@ message RoverDeviceState {
   sint32 forward_backward = 4; // Forward-backward: -100 (full reverse) to +100 (full forward), 0 = stopped;
 }
 
-// Command to control rover movement
+// Response: AcknowledgeResponse
 message RoverMovementCommand {
   bool tracks_active = 1; // Indicates if the rover tracks are active;
   sint32 left_right = 2; // Left-right: -100 (full left) to +100 (full right), 0 = straight;
