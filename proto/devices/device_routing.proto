@@ -10,7 +10,7 @@ message RoutingDeviceCommand {
   oneof command {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
-    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    PingCommand ping = 2; // Response: CommandResult
     
     // Discovery commands
     RoutingAttachedDevicesRequest attached_devices = 10; // Response: RoutingAttachedDevicesResponse

@@ -24,25 +24,8 @@ message SystemInfoResponse {
   DeviceInfo device_info = 7; // Additional device information;
 }
 
-// Request for heartbeat (keep-alive)
-// Response: HeartbeatResponse
-message HeartbeatRequest {
+// Request for ping (common to all devices)
+// Response: CommandResult (success = 1)
+message PingCommand {
   // Empty - simple ping
-}
-
-// Response to heartbeat with timestamp
-message HeartbeatResponse {
-  int64 timestamp = 1; // Timestamp in milliseconds since epoch
-}
-
-// Generic acknowledgement response
-message AcknowledgeResponse {
-  // Empty - simple acknowledgement
-}
-
-// Error response with details
-message ErrorResponse {
-  int32 error_code = 1; // Numeric error code;
-  int64 timestamp_ms = 2; // Error timestamp (milliseconds since epoch);
-  string detail = 3; // Optional detail message;
 }

@@ -9,7 +9,7 @@ message DigitalOutputDeviceCommand {
   oneof command {
     // Common commands
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
-    HeartbeatRequest heartbeat = 2; // Response: HeartbeatResponse
+    PingCommand ping = 2; // Response: CommandResult
     
     // Digital Output-specific commands
     SetPWMChannelRequest set_channel = 10; // Response: AcknowledgeResponse

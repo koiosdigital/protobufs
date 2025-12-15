@@ -1,0 +1,11 @@
+# Modbus Bridge Options - set max count for bulk operations to 32
+
+# Read response arrays
+ringbahn.v1.ModbusReadCoilsResponse.values max_count:32
+ringbahn.v1.ModbusReadDiscreteInputsResponse.values max_count:32
+ringbahn.v1.ModbusReadHoldingRegistersResponse.values max_count:32
+ringbahn.v1.ModbusReadInputRegistersResponse.values max_count:32
+
+# Write request arrays
+ringbahn.v1.ModbusWriteMultipleCoilsRequest.values max_count:32
+ringbahn.v1.ModbusWriteMultipleRegistersRequest.values max_count:32

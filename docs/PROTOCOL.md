@@ -81,27 +81,11 @@ HeartbeatResponse ← Device (with timestamp)
 
 ## Device Types
 
-### Supported Device Types
-
-| Type                       | Value | Description                           |
-| -------------------------- | ----- | ------------------------------------- |
-| `DEVICE_TYPE_HUB`          | 1     | Main hub/coordinator                  |
-| `DEVICE_TYPE_NODE`         | 2     | Generic node module                   |
-| `DEVICE_TYPE_ROUTING`      | 3     | UART-to-CAN routing bridge            |
-| `DEVICE_TYPE_ADC`          | 4     | Analog-to-Digital Converter           |
-| `DEVICE_TYPE_SD_ADC`       | 5     | Sigma-Delta ADC                       |
-| `DEVICE_TYPE_VFD`          | 6     | Variable Frequency Drive (deprecated) |
-| `DEVICE_TYPE_ROVER`        | 7     | Mobile robot platform                 |
-| `DEVICE_TYPE_DIGITAL_OUT`  | 8     | Digital output module                 |
-| `DEVICE_TYPE_RS485_BRIDGE` | 9     | RS485 communication bridge            |
-
 ## Device-Specific Protocols
 
 `proto/devices/device_common.proto` contains helper payloads shared by every device:
 
 - `SystemInfoRequest` / `SystemInfoResponse` – queries hardware/software metadata and returns `DeviceInfo` (with device UUID).
-- `HeartbeatRequest` / `HeartbeatResponse` – lightweight liveness checks.
-- `AcknowledgeResponse` and `ErrorResponse` – minimalist success/error replies.
 
 ### Routing Device (UART-to-CAN Bridge)
 
@@ -219,16 +203,6 @@ message CommandResult {
 }
 ```
 
-**Error Response**: Detailed error information for asynchronous faults
-
-```protobuf
-message ErrorResponse {
-  int32 error_code = 1;
-  int64 timestamp_ms = 2;
-  string detail = 3;
-}
-```
-
 ### Error Codes
 
 Error codes are application-specific but follow these conventions:
@@ -240,25 +214,6 @@ Error codes are application-specific but follow these conventions:
 - `300-399`: Protocol errors
 
 ## Data Types and Constraints
-
-### Nanopb Constraints
-
-The protocol uses nanopb for embedded C generation with the following constraints:
-
-| Field                                       | Max Size   | Notes                      |
-| ------------------------------------------- | ---------- | -------------------------- |
-| `DeviceUUID.value`                          | 12 bytes   | Fixed length               |
-| `CommandResult.detail`                      | 64 bytes   | Optional string            |
-| `DigitalOutputState.values`                 | 8 items    | Array                      |
-| `ADCState.values`                           | 8 items    | Array                      |
-| `RoutingAttachedDevicesResponse.devices`    | 32 items   | Array                      |
-| `InternalOtaWriteRequest.data`              | 4096 bytes | Firmware chunk             |
-| `InternalOtaStatus.sha256_hash`             | 32 bytes   | Fixed length digest        |
-| `TerrabootSendBlockRequest.data`            | 256 bytes  | Terraboot block payload    |
-| `TerrabootRequestBlockResponse.data`        | 256 bytes  | Terraboot block payload    |
-| `TerrabootConnectResponse.mcu_type`         | 32 bytes   | Null-terminated string     |
-| `TerrabootConnectResponse.software_version` | 64 bytes   | Null-terminated string     |
-| `TerrabootGetIdResponse.can_uuid`           | 12 bytes   | Terraboot padded 6-byte ID |
 
 ### GPS Data
 

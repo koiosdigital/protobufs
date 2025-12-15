@@ -6,11 +6,7 @@ enum DeviceType {
   DEVICE_TYPE_UNSPECIFIED = 0; // Unknown Device
   DEVICE_TYPE_HUB = 1; // Main Hub
   DEVICE_TYPE_NODE = 2; // Node Module
-  DEVICE_TYPE_ROUTING = 3; // UART-to-CAN routing bridge
-  DEVICE_TYPE_ADC = 4; // Voltage ADC
-  DEVICE_TYPE_SD_ADC = 5; // Sigma Delta ADC
-  DEVICE_TYPE_VFD = 6; // Variable Frequency Drive (legacy)
-  DEVICE_TYPE_ROVER = 7; // Rover platform
-  DEVICE_TYPE_DIGITAL_OUT = 8; // Digital output / PWM bridge
-  DEVICE_TYPE_RS485_BRIDGE = 9; // RS485 Bridge
+  DEVICE_TYPE_SD_ADC = 3; // Sigma Delta ADC
+  DEVICE_TYPE_DIGITAL_OUT = 4; // Digital output / PWM bridge
+  DEVICE_TYPE_RS485_BRIDGE = 5; // RS485 Bridge
 }
