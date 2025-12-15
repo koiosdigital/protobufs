@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/types.proto";
+
+// Digital Output (PWM) device command request
+message DigitalOutputCommandRequest {
+  PWMChannelValue set_channel_value = 1;
+}
+
+// Digital Output device command response
+message DigitalOutputCommandResponse {
+  CommandResult result = 1;
+}
+
+// Single PWM channel configuration
+message PWMChannelValue {
+  int32 channel_number = 1; // Channel 0-7 (max 8 channels per device);
+  int32 duty_cycle_pct = 2; // PWM duty cycle as percentage (0-100);
+  int32 frequency_hz = 3; // PWM frequency in Hz (optional, 0 = use default);
+}
+
+// Complete Digital Output device state
+message DigitalOutputState {
+  int64 timestamp_ms = 1; // When state was captured (milliseconds since epoch);
+  repeated PWMChannelValue values = 2; // Max 8 channels;
+}

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/types.proto";
+
+// Rover device command request
+message RoverCommandRequest {
+  oneof command {
+    RoverMovementCommand movement_command = 1;
+  }
+}
+
+// Rover device command response
+message RoverCommandResponse {
+  CommandResult result = 1;
+}
+
+// Current rover device state
+message RoverDeviceState {
+  int64 timestamp_ms = 1; // When state was captured (milliseconds since epoch);
+  bool tracks_active = 2; // Indicates if the rover tracks are active;
+  sint32 left_right = 3; // Left-right: -100 (full left) to +100 (full right), 0 = straight;
+  sint32 forward_backward = 4; // Forward-backward: -100 (full reverse) to +100 (full forward), 0 = stopped;
+}
+
+// Command to control rover movement
+message RoverMovementCommand {
+  bool tracks_active = 1; // Indicates if the rover tracks are active;
+  sint32 left_right = 2; // Left-right: -100 (full left) to +100 (full right), 0 = straight;
+  sint32 forward_backward = 3; // Forward-backward: -100 (full reverse) to +100 (full forward), 0 = stopped;
+}

@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/types.proto";
+
+// VFD device command request
+message VFDCommandRequest {
+  oneof command {
+    SetFailSafeRequest set_fail_safe = 1;
+    SetDriveModeRequest set_drive_mode = 2;
+    SetFrequencyRequest set_frequency = 3;
+    ClearAlarmRequest clear_alarm = 4;
+  }
+}
+
+// VFD device command response
+message VFDCommandResponse {
+  CommandResult result = 1;
+}
+
+// Complete VFD device state
+message VFDState {
+  // VFD drive mode enumeration
+  enum DriveMode {
+    DRIVE_MODE_UNSPECIFIED = 0;
+    DRIVE_MODE_STOP = 1;
+    DRIVE_MODE_FORWARD = 2;
+    DRIVE_MODE_REVERSE = 3;
+  }
+
+  // VFD fail-safe mode enumeration
+  enum FailSafeMode {
+    FAIL_SAFE_MODE_UNSPECIFIED = 0;
+    FAIL_SAFE_MODE_RAMP_DOWN = 1;
+    FAIL_SAFE_MODE_E_STOP = 2;
+    FAIL_SAFE_MODE_NONE = 3;
+  }
+
+  int64 timestamp_ms = 1; // When state was captured (milliseconds since epoch);
+  float frequency_hz = 2;
+  float power_w = 3;
+  float current_a = 4;
+  float voltage_v = 5;
+  DriveMode drive_mode = 6;
+  FailSafeMode fail_safe_mode = 7;
+  int32 alarm_code = 8;
+  float min_frequency_hz = 9;
+  float max_frequency_hz = 10;
+}
+
+// Command to set VFD fail-safe mode
+message SetFailSafeRequest {
+  VFDState.FailSafeMode mode = 1;
+}
+
+// Command to set VFD drive mode
+message SetDriveModeRequest {
+  VFDState.DriveMode mode = 1;
+}
+
+// Command to set VFD output frequency
+message SetFrequencyRequest {
+  float frequency_hz = 1;
+}
+
+// Command to clear VFD alarm
+message ClearAlarmRequest {
+  // Empty - clears current alarm
+}

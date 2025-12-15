@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/types.proto";
+
+// ADC device command request
+message ADCCommandRequest {
+  // Empty - ADC is read-only, no commands currently supported
+}
+
+// ADC device command response
+message ADCCommandResponse {
+  CommandResult result = 1;
+}
+
+// Single ADC channel reading
+message ADCChannelValue {
+  int32 channel_number = 1;
+  int32 adc_value = 2; // Raw ADC value;
+}
+
+// Complete ADC device state
+message ADCState {
+  int64 timestamp_ms = 1; // When state was captured (milliseconds since epoch);
+  repeated ADCChannelValue values = 2;
+}

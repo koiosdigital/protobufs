@@ -1,11 +1,56 @@
+# Source directories (if applicable)
 src
 src/**
 
-#Generated files
+# Generated files
+generated/
 *.pb.c
 *.pb.h
+*.pb.py
+*.pb.go
+*_pb2.py
+
+# Build files
 Makefile
 cmake_install.cmake
-CMakeFiles
-.DS_Store
+CMakeFiles/
+CMakeCache.txt
+build/
+cmake-build-*/
+.cmake/
+*.a
+*.so
+*.dylib
 libprotobufs.a
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# Buf
+.buf/
+
+# Note: Old nanopb/ directory kept for backward compatibility
+# If fully migrated to generated/, uncomment these:
+# nanopb/*.pb.c
+# nanopb/*.pb.h

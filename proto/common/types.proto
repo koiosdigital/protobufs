@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package ringbahn.v1;
+
+import "common/enums.proto";
+
+// 12-byte identifier carried inside Ringbahn frames
+message DeviceUUID {
+  bytes value = 1; // Fixed-length 12 byte unique identifier
+}
+
+// Standard command response shared across device protocols
+message CommandResult {
+  bool success = 1;
+  int32 error_code = 2;
+  string detail = 3; // Optional human-readable detail
+}
+
+// Response metadata for debugging and monitoring
+message ResponseMetadata {
+  int64 processing_time_us = 1; // Processing time in microseconds;
+  int64 timestamp_ms = 2; // Response timestamp;
+}
+
+// Device information returned during discovery
+message DeviceInfo {
+  DeviceType device_type = 1;
+  DeviceUUID device_uuid = 2; // Ringbahn device identifier;
+  uint32 short_id = 3; // Short numeric identifier;
+}
+
+// GPS location and telemetry data shared by mobile devices
+message GPSState {
+  double latitude = 1; // Latitude in degrees;
+  double longitude = 2; // Longitude in degrees;
+  float altitude = 3; // Altitude in meters;
+  float speed = 4; // Speed in m/s;
+  float heading = 5; // Heading in degrees;
+  int32 satellites = 6; // Number of satellites used for the fix;
+}
