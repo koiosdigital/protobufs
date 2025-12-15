@@ -149,13 +149,13 @@ See [Protocol Buffers documentation](https://protobuf.dev/) for language-specifi
 
 All commands and telemetry are sent inside the Ringbahn frame. The base layout is:
 
-- **0xA5** – Start-of-frame sentinel
-- **uint16 message_id** – Identifies the payload type for a specific device family
-- **uint16 payload_length** – Number of payload bytes (not including CRC)
+- **0xA5** – Start-of-frame sentinel (not included in CRC)
+- **uint16 message_id** – Host-assigned tracking ID for request/response correlation
+- **uint16 payload_length** – Number of payload bytes
 - **payload** – Protobuf bytes for the selected message
-- **crc16** – CRC computed over every previous byte, including the 0xA5 sentinel
+- **crc16** – CRC computed over message_id, payload_length, and payload bytes
 
-For UART links we also include addressing:
+For UART links we also include addressing (inside the CRC):
 
 - **12-byte sender UUID** – Device UUID of the source
 - **12-byte recipient UUID** – Device UUID of the target
@@ -183,8 +183,8 @@ The system supports multiple device types:
 
 ### Communication Patterns
 
-1. **Request-Response**: Commands return responses
-2. **State Updates**: Devices broadcast their `<Device>State` payloads (e.g., `ADCState`, `VFDState`) using their assigned message IDs
+1. **Request-Response**: Commands return responses with matching message_id
+2. **State Updates**: Devices broadcast their `<Device>State` payloads (e.g., `ADCState`, `VFDState`)
 3. **Discovery**: Automatic device detection
 4. **Heartbeat**: Keep-alive mechanism
 
@@ -192,7 +192,7 @@ See [PROTOCOL.md](docs/PROTOCOL.md) for detailed protocol specification.
 
 ### Shared Commands
 
-`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `HeartbeatRequest/Response`, `AcknowledgeResponse`, and `ErrorResponse`. These payloads occupy the `0x0000-0x00FF` message ID range so controllers can issue global commands without importing every device proto.
+`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `HeartbeatRequest/Response`, `AcknowledgeResponse`, and `ErrorResponse`.
 
 ### Routing Device
 
@@ -208,9 +208,8 @@ All other device protos cover nodes that live exclusively on the CAN bus.
 ### Adding New Device Types
 
 1. Create a new proto file in `proto/devices/` (or extend `device_common.proto` if the command is shared).
-2. Allocate Ringbahn `message_id` values for the new payloads and document them in `docs/PROTOCOL.md`.
-3. Create a `.options` file for nanopb settings that matches the package name (`ringbahn.v1`).
-4. Update this README and the protocol docs so integrators know which IDs map to which payloads.
+2. Create a `.options` file for nanopb settings that matches the package name (`ringbahn.v1`).
+3. Update this README and the protocol docs to describe the new device's messages.
 
 ### Breaking Changes
 

@@ -53,24 +53,14 @@ make
 
 ## Ringbahn Frame Cheatsheet
 
-- `0xA5` start byte
-- `uint16 message_id`
+- `0xA5` start byte (sentinel, not in CRC)
+- `uint16 message_id` (host-assigned tracking ID)
 - `uint16 payload_len`
 - `sender_uuid` + `recipient_uuid` (12 bytes each) on UART
 - `payload` bytes (protobuf message)
-- `crc16` over everything above
+- `crc16` over message_id, payload_len, UUIDs (if present), and payload
 
-Message ID ranges:
-
-| Range           | Purpose                        |
-| --------------- | ------------------------------ |
-| `0x0000-0x00FF` | device_common                  |
-| `0x0100-0x01FF` | ADC                            |
-| `0x0200-0x02FF` | Digital output                 |
-| `0x0300-0x03FF` | VFD                            |
-| `0x0400-0x04FF` | Rover                          |
-| `0x0500-0x05FF` | Routing (discovery + firmware) |
-| `0x8000-0x8FFF` | Responses (high bit set)       |
+Message IDs are arbitrary values assigned by the host for tracking request/response pairs. They do not encode payload type information.
 
 ## Common Message Patterns
 
@@ -83,7 +73,7 @@ SystemInfoResponse ← Device
 
 ### State Updates
 
-Device publishes frames whose payload is `<Device>State` (ADCState, VFDState, etc.) using its allocated message ID. Controllers can passively listen or send the device's "state request" ID if a poll is required.
+Devices publish state frames with payloads like `ADCState`, `VFDState`, etc. The host uses device type context to deserialize the correct protobuf message.
 
 ### Device Commands
 

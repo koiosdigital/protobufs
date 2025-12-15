@@ -129,17 +129,18 @@ PB_ASSERT(pb_encode(&stream, ringbahn_v1_SystemInfoRequest_fields, &req));
 
 ringbahn_frame_t frame = {
   .start = 0xA5,
-  .message_id = 0x0100, // Allocated ID for SystemInfoRequest
+  .message_id = next_request_id++, // Host assigns tracking ID
   .payload_len = (uint16_t)stream.bytes_written,
 };
 memcpy(frame.sender_uuid, my_uuid, sizeof(frame.sender_uuid));
 memcpy(frame.recipient_uuid, target_uuid, sizeof(frame.recipient_uuid));
 memcpy(frame.payload, payload, frame.payload_len);
-frame.crc = ringbahn_crc16((uint8_t *)&frame,
-               offsetof(ringbahn_frame_t, payload) + frame.payload_len);
+// CRC over message_id, length, UUIDs, and payload (not the sentinel)
+frame.crc = ringbahn_crc16((uint8_t *)&frame.message_id,
+               offsetof(ringbahn_frame_t, crc) - offsetof(ringbahn_frame_t, message_id));
 ```
 
-Decode by validating the CRC, choosing the correct `message_id`, and invoking `pb_decode` with the matching protobuf descriptor (e.g., `ringbahn_v1_SystemInfoResponse_fields`).
+Decode by validating the CRC, then use device context (UUID, command state) to determine which protobuf descriptor to use (e.g., `ringbahn_v1_SystemInfoResponse_fields`). The `message_id` field is used by the host to match responses to requests.
 
 #### Python Code
 
@@ -170,19 +171,23 @@ import struct
 req = device_common_pb2.SystemInfoRequest()
 payload = req.SerializeToString()
 
+message_id = next_request_id()  # Host assigns tracking ID
+
 frame = bytearray()
-frame.append(0xA5)
-frame += struct.pack('<HH', 0x0100, len(payload))
+frame.append(0xA5)  # Sentinel (not in CRC)
+frame += struct.pack('<HH', message_id, len(payload))
 frame += sender_uuid_bytes  # 12 bytes
 frame += recipient_uuid_bytes  # 12 bytes
 frame += payload
-frame += struct.pack('<H', crc16(frame))
+# CRC over message_id, length, UUIDs, and payload
+frame += struct.pack('<H', crc16(frame[1:]))  # Skip sentinel
 
 # Decode
 message_id, length = struct.unpack_from('<HH', frame, 1)
 payload = frame[1 + 2 + 2 + 12 + 12 : 1 + 2 + 2 + 12 + 12 + length]
 
-if message_id == 0x8100:
+# Use device context to determine message type
+if is_system_info_response(device_context):
   resp = device_common_pb2.SystemInfoResponse()
   resp.ParseFromString(payload)
 ```

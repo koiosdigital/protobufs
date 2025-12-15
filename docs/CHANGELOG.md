@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Introduced the Ringbahn binary frame format with CRC16 validation, UART UUID addressing, and documented message ID ranges.
+- Introduced the Ringbahn binary frame format with CRC16 validation (over message_id, length, and payload) and UART UUID addressing.
 - Added `devices/device_common.proto` for shared commands (system info, heartbeat, acknowledgements, standard errors).
 - Added `DeviceUUID` and `CommandResult` helper messages to `common/types.proto`, including nanopb sizing constraints.
 

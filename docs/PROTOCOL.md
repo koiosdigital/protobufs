@@ -14,13 +14,13 @@ The Terranova protocol is a binary message-passing protocol designed for distrib
 
 Ringbahn replaces the monolithic envelope message with a binary frame that keeps routing information outside the protobuf payload. Every frame uses the same base layout:
 
-| Field            | Size    | Description                                   |
-| ---------------- | ------- | --------------------------------------------- |
-| `0xA5`           | 1 byte  | Start-of-frame sentinel                       |
-| `message_id`     | 2 bytes | Identifies the protobuf payload type          |
-| `payload_length` | 2 bytes | Length of the payload bytes                   |
-| `payload`        | N bytes | Serialized protobuf message                   |
-| `crc16`          | 2 bytes | CRC-16 over every previous byte, incl. `0xA5` |
+| Field            | Size    | Description                                         |
+| ---------------- | ------- | --------------------------------------------------- |
+| `0xA5`           | 1 byte  | Start-of-frame sentinel                             |
+| `message_id`     | 2 bytes | Host-assigned tracking ID for request/response pair |
+| `payload_length` | 2 bytes | Length of the payload bytes                         |
+| `payload`        | N bytes | Serialized protobuf message                         |
+| `crc16`          | 2 bytes | CRC-16 over message_id, payload_length, and payload |
 
 #### UART Variant with Device UUIDs
 
@@ -33,27 +33,17 @@ This keeps routing metadata standardized while still allowing other transports (
 
 #### Validating Frames
 
-The CRC16 is computed over the sentinel, message ID, payload length, UUID fields (if present), and payload. Receivers MUST validate the CRC before attempting to parse the payload.
+The CRC16 is computed over the message ID, payload length, UUID fields (if present), and payload bytes. The sentinel byte is NOT included in the CRC. Receivers MUST validate the CRC before attempting to parse the payload.
 
 ### Device UUIDs
 
 `common/types.proto` now defines `DeviceUUID`, a fixed 12-byte identifier referenced by both the transport header and higher-level payloads such as `DeviceInfo`. UUIDs stay stable for the lifetime of the device and replace the older "Endpoint" structure.
 
-### Ringbahn Message IDs
+### Message IDs
 
-Message IDs provide the only hint the decoder needs to pick the correct protobuf type. We reserve ranges per subsystem so devices never collide:
+The `message_id` field is an arbitrary 16-bit value assigned by the host system for request tracking and response association. The ID does not encode payload type information—devices must use out-of-band context (device type, command semantics) to determine how to deserialize the protobuf payload.
 
-| Range           | Purpose                                             |
-| --------------- | --------------------------------------------------- |
-| `0x0000-0x00FF` | `device_common` (system info, heartbeat, error/ack) |
-| `0x0100-0x01FF` | ADC commands and state                              |
-| `0x0200-0x02FF` | Digital output commands and state                   |
-| `0x0300-0x03FF` | VFD commands and state                              |
-| `0x0400-0x04FF` | Rover commands and state                            |
-| `0x0500-0x05FF` | Routing bridge (discovery + firmware)               |
-| `0x8000-0x8FFF` | Response IDs (high bit set)                         |
-
-Responses typically mirror the request ID with bit 15 set (example: request `0x0101`, response `0x8101`). When you add a new payload, pick the next unused value in the correct range and document it here.
+The host is free to use any numbering scheme for tracking outstanding requests. Common patterns include sequential counters or request/response pairing conventions, but the protocol itself places no requirements on ID assignment.
 
 ## Communication Patterns
 
@@ -66,18 +56,11 @@ Client → [Request] → Device
 Client ← [Response] ← Device
 ```
 
-Example: System Information Query
-
-```
-Controller → Frame[message_id=0x0100, payload=SystemInfoRequest]
-Controller ← Frame[message_id=0x8100, payload=SystemInfoResponse]
-```
-
-Message IDs are assigned per device family. The high bit is typically used to distinguish requests (`0x0xxx`) from responses (`0x8xxx`), but the transport only cares that both peers agree on the mapping described in this document.
+The host assigns a `message_id` to each request and the device echoes that same ID in its response, allowing the host to correlate replies with pending requests.
 
 ### 2. State Updates
 
-Each device file defines its own `State` payload (e.g., `ADCState`, `VFDState`). Controllers either poll by sending the device-specific state request ID or listen for unsolicited frames when the firmware publishes on its own interval.
+Devices may publish unsolicited state updates (e.g., `ADCState`, `VFDState`) or respond to explicit state query requests. The host must track device types to determine which protobuf message to deserialize.
 
 ### 3. Discovery
 
@@ -120,8 +103,6 @@ HeartbeatResponse ← Device (with timestamp)
 - `HeartbeatRequest` / `HeartbeatResponse` – lightweight liveness checks.
 - `AcknowledgeResponse` and `ErrorResponse` – minimalist success/error replies.
 
-Use these message IDs for global commands, then layer device-specific commands alongside them in the same Ringbahn namespace.
-
 ### Routing Device (UART-to-CAN Bridge)
 
 Routing devices (DeviceType `DEVICE_TYPE_ROUTING`) terminate the UART Ringbahn link and fan commands out to the CAN bus. Their proto covers three areas:
@@ -157,15 +138,6 @@ All other devices now live exclusively on CAN, so the routing bridge is the sing
 
 ### ADC (Analog-to-Digital Converter)
 
-**Purpose**: Read analog sensor values
-
-**Messages**:
-
-- `ADCCommandRequest` / `ADCCommandResponse`: Currently read-only
-- `ADCState`: Contains array of channel readings
-
-**Usage**:
-
 ```protobuf
 message ADCState {
   repeated ADCChannelValue values = 1;  // Up to 8 channels
@@ -180,15 +152,6 @@ message ADCChannelValue {
 ### VFD (Variable Frequency Drive)
 
 **Purpose**: Control motor speed and direction
-
-**Messages**:
-
-- Set frequency (Hz)
-- Set drive mode (stop/forward/reverse)
-- Set fail-safe mode
-- Clear alarms
-
-**State Information**:
 
 ```protobuf
 message VFDState {
@@ -326,9 +289,8 @@ message GPSState {
 To add new device types or commands:
 
 1. Create new proto file in appropriate subdirectory
-2. Assign a unique `message_id` (see Ringbahn ID table below) and reserve it in firmware
-3. Add corresponding `.options` file for nanopb
-4. Update documentation (README + this file) with the new ID and payload description
+2. Add corresponding `.options` file for nanopb
+3. Update documentation (README + this file) with the new message descriptions
 
 ### Breaking Changes
 
