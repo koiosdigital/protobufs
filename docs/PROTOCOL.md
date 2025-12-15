@@ -161,6 +161,7 @@ message ADCChannelValue {
 **Purpose**: Bridge Modbus RTU/TCP devices to the Ringbahn network
 
 **Supported Operations**:
+
 - Read Coils (Function Code 01)
 - Read Discrete Inputs (Function Code 02)
 - Read Holding Registers (Function Code 03)
@@ -187,6 +188,7 @@ message ModbusWriteMultipleRegistersRequest {
 ```
 
 **Implementation Notes**:
+
 - No `pb_callback_t` – all arrays use fixed-size static allocation
 - Set via `.options` file: `max_count:32` for all bulk arrays
 - Returns `CommandResult` for write operations
