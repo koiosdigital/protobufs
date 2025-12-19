@@ -34,38 +34,13 @@ file(GLOB_RECURSE NANOPB_OPTIONS CONFIGURE_DEPENDS
 # Generated nanopb sources (do not hardcode filenames)
 file(GLOB_RECURSE NANOPB_GEN_SRCS CONFIGURE_DEPENDS
     "${NANOPB_OUT_PATH}/*.pb.c"
-    "${NANOPB_OUT_PATH}/*/*.pb.c"
-    "${NANOPB_OUT_PATH}/*/*/*.pb.c"
 )
 
-# Ensure nanopb code exists at configure time (so the build has sources).
-# This does not hardcode any generated filenames and keeps CMake stable across proto renames.
+# Keep configuration side-effect-free: do not run codegen at configure time.
+# If sources are missing, fail fast with instructions.
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     if(NOT EXISTS "${BUF_TEMPLATE}")
         message(FATAL_ERROR "Missing buf template: ${BUF_TEMPLATE}")
-    endif()
-
-    if(NOT NANOPB_GEN_SRCS)
-        message(STATUS "No generated nanopb sources found; running 'buf generate'...")
-        execute_process(
-            COMMAND "${BUF_EXECUTABLE}" generate --template "${BUF_TEMPLATE}"
-            WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-            RESULT_VARIABLE BUF_GENERATE_RESULT
-        )
-        if(NOT BUF_GENERATE_RESULT EQUAL 0)
-            message(FATAL_ERROR "buf generate failed with exit code ${BUF_GENERATE_RESULT}")
-        endif()
-
-        # Re-scan after generation.
-        file(GLOB_RECURSE NANOPB_GEN_SRCS CONFIGURE_DEPENDS
-            "${NANOPB_OUT_PATH}/*.pb.c"
-            "${NANOPB_OUT_PATH}/*/*.pb.c"
-            "${NANOPB_OUT_PATH}/*/*/*.pb.c"
-        )
-
-        if(NOT NANOPB_GEN_SRCS)
-            message(FATAL_ERROR "buf generate produced no nanopb .pb.c files under ${NANOPB_OUT_PATH}")
-        endif()
     endif()
 
     add_custom_target(protobufs_generate
@@ -79,6 +54,16 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
         COMMENT "Generating nanopb sources via buf"
         VERBATIM
     )
+
+    if(NOT NANOPB_GEN_SRCS)
+        message(FATAL_ERROR
+            "No generated nanopb sources found under ${NANOPB_OUT_PATH}.\n"
+            "Run one of:\n"
+            "  - ${BUF_EXECUTABLE} generate --template ${BUF_TEMPLATE}\n"
+            "  - cmake --build <build-dir> --target protobufs_generate\n"
+            "Then re-run CMake configure."
+        )
+    endif()
 endif()
 
 set(NANOPB_SRCS
