@@ -2,5 +2,7 @@
   "files.associations": {
     "*.star": "python",
     "enums.pb-c.h": "c"
-  }
+  },
+  "buf.binaryPath": "buf",
+  "buf.formatOnSave": true
 }

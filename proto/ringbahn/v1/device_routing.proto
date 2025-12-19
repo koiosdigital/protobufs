@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "common/types.proto";
-import "devices/device_common.proto";
+import "ringbahn/v1/device_common.proto";
+import "ringbahn/v1/types.proto";
 
 // Top-level Routing device command message
 message RoutingDeviceCommand {
@@ -12,20 +12,20 @@ message RoutingDeviceCommand {
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
     ResetCommand reset = 3; // Response: CommandResult
-    
+
     // Discovery commands
     RoutingAttachedDevicesRequest attached_devices = 10; // Response: RoutingAttachedDevicesResponse
     RoutingIdentifyActiveDeviceRequest identify = 11; // Response: RoutingIdentifyActiveDeviceResponse
     RoutingSetChannelIdentityRequest set_channel = 12; // Response: AcknowledgeResponse
     RoutingGetStateRequest get_state = 13; // Response: RoutingDeviceState
-    
+
     // Internal OTA commands
     InternalOtaBeginRequest ota_begin = 20; // Response: InternalOtaStatus
     InternalOtaWriteRequest ota_write = 21; // Response: InternalOtaStatus
     InternalOtaEndRequest ota_end = 22; // Response: InternalOtaStatus
     InternalOtaAbortRequest ota_abort = 23; // Response: InternalOtaStatus
     InternalOtaSetBootPartitionRequest ota_set_boot = 24; // Response: InternalOtaStatus
-    
+
     // Terraboot CAN bootloader commands
     TerrabootEnterRequest terraboot_enter = 30; // Response: AcknowledgeResponse
     TerrabootConnectRequest terraboot_connect = 31; // Response: TerrabootConnectResponse

@@ -1,84 +1,100 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Protocol Buffers Generation Configuration
-set(PROTO_COMPILER "protoc")
-set(PROTO_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/proto")
+project(protobufs C CXX)
 
-# Support both old (nanopb/) and new (generated/nanopb/) output paths
-# for backward compatibility during migration
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/nanopb")
-    set(NANOPB_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/nanopb")
-    message(STATUS "Using legacy nanopb output path: ${NANOPB_OUT_PATH}")
-else()
-    set(NANOPB_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/generated/nanopb")
-    message(STATUS "Using new nanopb output path: ${NANOPB_OUT_PATH}")
+# Protocol Buffers / Nanopb (Buf-driven) build
+
+set(PROTO_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/proto")
+set(NANOPB_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/generated/nanopb")
+set(BUF_TEMPLATE "${CMAKE_CURRENT_LIST_DIR}/buf.gen.yaml")
+
+find_program(BUF_EXECUTABLE buf)
+if(NOT BUF_EXECUTABLE)
+    message(FATAL_ERROR "buf not found. Install buf and ensure it is on PATH.")
 endif()
 
-# Nanopb core sources (always needed)
+message(STATUS "Using buf: ${BUF_EXECUTABLE}")
+message(STATUS "Using nanopb output path: ${NANOPB_OUT_PATH}")
+
+# Nanopb runtime sources (always needed)
 set(NANOPB_CORE_SRCS
-    "${NANOPB_OUT_PATH}/pb_common.c"
-    "${NANOPB_OUT_PATH}/pb_encode.c"
-    "${NANOPB_OUT_PATH}/pb_decode.c"
-)
-
-# Common proto-generated sources
-set(NANOPB_COMMON_SRCS
-    "${NANOPB_OUT_PATH}/common/enums.pb.c"
-    "${NANOPB_OUT_PATH}/common/types.pb.c"
-)
-
-# Device proto-generated sources
-set(NANOPB_DEVICE_SRCS
-    "${NANOPB_OUT_PATH}/devices/device_adc.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_common.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_digital_output.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_routing.pb.c"
-    "${NANOPB_OUT_PATH}/devices/device_modbus_bridge.pb.c"
-)
-
-# All generated sources
-set(NANOPB_SRCS
-    ${NANOPB_CORE_SRCS}
-    ${NANOPB_COMMON_SRCS}
-    ${NANOPB_DEVICE_SRCS}
+    "${CMAKE_CURRENT_LIST_DIR}/nanopb/pb_common.c"
+    "${CMAKE_CURRENT_LIST_DIR}/nanopb/pb_encode.c"
+    "${CMAKE_CURRENT_LIST_DIR}/nanopb/pb_decode.c"
 )
 
 # Proto source files (organized by category)
-file(GLOB PROTO_COMMON_SRCS "${PROTO_BASE_DIR}/common/*.proto")
-file(GLOB PROTO_DEVICE_SRCS "${PROTO_BASE_DIR}/devices/*.proto")
+file(GLOB_RECURSE PROTO_SRCS CONFIGURE_DEPENDS "${PROTO_BASE_DIR}/*.proto")
 
-set(PROTO_SRCS
-    ${PROTO_COMMON_SRCS}
-    ${PROTO_DEVICE_SRCS}
+# Nanopb options files (affect codegen)
+file(GLOB_RECURSE NANOPB_OPTIONS CONFIGURE_DEPENDS
+    "${PROTO_BASE_DIR}/*.options"
 )
 
-# Generate nanopb code if not in early expansion phase
+# Generated nanopb sources (do not hardcode filenames)
+file(GLOB_RECURSE NANOPB_GEN_SRCS CONFIGURE_DEPENDS
+    "${NANOPB_OUT_PATH}/*.pb.c"
+    "${NANOPB_OUT_PATH}/*/*.pb.c"
+    "${NANOPB_OUT_PATH}/*/*/*.pb.c"
+)
+
+# Ensure nanopb code exists at configure time (so the build has sources).
+# This does not hardcode any generated filenames and keeps CMake stable across proto renames.
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    file(MAKE_DIRECTORY ${NANOPB_OUT_PATH})
-    file(MAKE_DIRECTORY ${NANOPB_OUT_PATH}/common)
-    file(MAKE_DIRECTORY ${NANOPB_OUT_PATH}/devices)
-    
-    add_custom_command(OUTPUT ${NANOPB_SRCS}
-            COMMAND ${PROTO_COMPILER} 
-                -I ${PROTO_BASE_DIR}
-                --nanopb_out=${NANOPB_OUT_PATH} 
-                ${PROTO_SRCS}
-            WORKING_DIRECTORY ${PROTO_BASE_DIR}
-            DEPENDS ${PROTO_SRCS}
-            COMMENT "Generating nanopb C code from protocol buffers"
-            VERBATIM)
+    if(NOT EXISTS "${BUF_TEMPLATE}")
+        message(FATAL_ERROR "Missing buf template: ${BUF_TEMPLATE}")
+    endif()
+
+    if(NOT NANOPB_GEN_SRCS)
+        message(STATUS "No generated nanopb sources found; running 'buf generate'...")
+        execute_process(
+            COMMAND "${BUF_EXECUTABLE}" generate --template "${BUF_TEMPLATE}"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+            RESULT_VARIABLE BUF_GENERATE_RESULT
+        )
+        if(NOT BUF_GENERATE_RESULT EQUAL 0)
+            message(FATAL_ERROR "buf generate failed with exit code ${BUF_GENERATE_RESULT}")
+        endif()
+
+        # Re-scan after generation.
+        file(GLOB_RECURSE NANOPB_GEN_SRCS CONFIGURE_DEPENDS
+            "${NANOPB_OUT_PATH}/*.pb.c"
+            "${NANOPB_OUT_PATH}/*/*.pb.c"
+            "${NANOPB_OUT_PATH}/*/*/*.pb.c"
+        )
+
+        if(NOT NANOPB_GEN_SRCS)
+            message(FATAL_ERROR "buf generate produced no nanopb .pb.c files under ${NANOPB_OUT_PATH}")
+        endif()
+    endif()
+
+    add_custom_target(protobufs_generate
+        COMMAND "${BUF_EXECUTABLE}" generate --template "${BUF_TEMPLATE}"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        DEPENDS
+            ${PROTO_SRCS}
+            ${NANOPB_OPTIONS}
+            "${CMAKE_CURRENT_LIST_DIR}/buf.yaml"
+            "${CMAKE_CURRENT_LIST_DIR}/buf.gen.yaml"
+        COMMENT "Generating nanopb sources via buf"
+        VERBATIM
+    )
 endif()
 
-if(ESP_PLATFORM)
-idf_component_register(SRCS "${NANOPB_SRCS}" INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/nanopb")
-else()
+set(NANOPB_SRCS
+    ${NANOPB_CORE_SRCS}
+    ${NANOPB_GEN_SRCS}
+)
+
 add_library(protobufs STATIC ${NANOPB_SRCS})
+if(TARGET protobufs_generate)
+    add_dependencies(protobufs protobufs_generate)
+endif()
 target_include_directories(protobufs PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/nanopb
+    ${NANOPB_OUT_PATH}
 )
 target_compile_definitions(protobufs PUBLIC PB_BUFFER_ONLY)
 target_compile_definitions(protobufs PUBLIC PB_LITTLE_ENDIAN_8BIT)
 target_compile_definitions(protobufs PUBLIC PB_NO_ERRMSG)
-target_sources(protobufs PRIVATE ${NANOPB_SRCS})
-endif()
 

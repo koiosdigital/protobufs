@@ -11,10 +11,10 @@ This repository contains the Protocol Buffer definitions for the Terranova distr
 ```
 protobufs/
 ├── proto/                      # Protocol Buffer definitions
-│   ├── common/                # Shared types and enumerations
+│   ├──                 # Shared types and enumerations
 │   │   ├── enums.proto       # Device types and common enums
 │   │   └── types.proto       # Device UUIDs, CommandResult, GPSState, etc.
-│   └── devices/               # Device-specific protocols + shared helpers
+│   └──                # Device-specific protocols + shared helpers
 │       ├── device_common.proto      # Shared commands (system info, ping, errors)
 │       ├── device_routing.proto     # UART-to-CAN bridge, discovery, firmware tools
 │       ├── device_adc.proto         # Analog-to-Digital Converter
@@ -26,11 +26,8 @@ protobufs/
 ├── docs/                      # Documentation
 │   ├── PROTOCOL.md           # Protocol specification
 │   └── CHANGELOG.md          # Version history
-├── scripts/                   # Build and utility scripts
-│   ├── generate.sh           # Code generation script
-│   └── validate.sh           # Proto validation script
-├── buf.yaml                   # Buf configuration
-├── buf.gen.yaml              # Buf generation configuration
+├── buf.yaml                   # Buf module + lint config
+├── buf.gen.yaml               # Buf codegen config (nanopb + TypeScript)
 └── CMakeLists.txt            # CMake build configuration
 ```
 
@@ -74,14 +71,17 @@ pip3 install nanopb
 
 ### Generating Code
 
-#### Using the Generation Script (Recommended)
+#### Using Buf (Recommended)
 
 ```bash
-# Make script executable (first time only)
-chmod +x scripts/generate.sh
+# Validate protos (compilation)
+buf build
 
-# Generate nanopb C code
-./scripts/generate.sh
+# Lint
+buf lint
+
+# Generate nanopb (C) + modern TypeScript
+buf generate
 ```
 
 #### Using CMake
@@ -106,7 +106,8 @@ protoc --proto_path=proto \
 Validate your proto files before committing:
 
 ```bash
-./scripts/validate.sh
+buf build
+buf lint
 ```
 
 ## 📦 Package Versioning
@@ -114,7 +115,7 @@ Validate your proto files before committing:
 All proto files use versioned packages:
 
 ```protobuf
-package ringbahn.v1;
+package ringbahn;
 ```
 
 This allows for future API evolution while maintaining backward compatibility.
@@ -164,7 +165,7 @@ This removes the need for a giant envelope message. Each device only imports the
 
 #### Device UUIDs
 
-`common/types.proto` defines `DeviceUUID`, a fixed 12-byte identifier that mirrors the IDs carried in the Ringbahn header. `DeviceInfo` now contains this UUID along with any legacy short IDs so both discovery flows and payloads speak the same addressing language.
+`types.proto` defines `DeviceUUID`, a fixed 12-byte identifier that mirrors the IDs carried in the Ringbahn header. `DeviceInfo` now contains this UUID along with any legacy short IDs so both discovery flows and payloads speak the same addressing language.
 
 ### Device Types
 
@@ -178,7 +179,7 @@ The system supports multiple device types:
 - `DEVICE_TYPE_ROVER`: Mobile robot platform
 - `DEVICE_TYPE_DIGITAL_OUT`: PWM / digital output bridge
 - `DEVICE_TYPE_MODBUS_BRIDGE`: Modbus RTU/TCP bridge
-- Additional values can be added as needed in `common/enums.proto`
+- Additional values can be added as needed in `enums.proto`
 
 ### Communication Patterns
 
@@ -193,11 +194,11 @@ See [PROTOCOL.md](docs/PROTOCOL.md) for detailed protocol specification.
 
 ### Shared Commands
 
-`proto/devices/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `PingCommand`, `AcknowledgeResponse`, and `ErrorResponse`.
+`proto/device_common.proto` hosts messages that every device understands: `SystemInfoRequest/Response`, `PingCommand`, `AcknowledgeResponse`, and `ErrorResponse`.
 
 ### Routing Device
 
-`proto/devices/device_routing.proto` defines the UART-to-CAN bridge. It now owns every discovery primitive (attached devices, active channel selection) as well as both firmware paths:
+`proto/device_routing.proto` defines the UART-to-CAN bridge. It now owns every discovery primitive (attached devices, active channel selection) as well as both firmware paths:
 
 - **Internal OTA**: Commands (`InternalOta*`) stream new firmware into the routing MCU and return compact `InternalOtaStatus` updates.
 - **Terraboot CAN bootloader**: `Terraboot*` messages map one-to-one with the Katapult/Terraboot protocol (`connect`, `send_block`, `eof`, `request_block`, `complete`, `get_canbus_id`) so routing firmware can forward frames down the CAN bus without extra wrappers.
@@ -208,8 +209,8 @@ All other device protos cover nodes that live exclusively on the CAN bus.
 
 ### Adding New Device Types
 
-1. Create a new proto file in `proto/devices/` (or extend `device_common.proto` if the command is shared).
-2. Create a `.options` file for nanopb settings that matches the package name (`ringbahn.v1`).
+1. Create a new proto file in `proto/` (or extend `device_common.proto` if the command is shared).
+2. Create a `.options` file for nanopb settings that matches the package name (`ringbahn`).
 3. Update this README and the protocol docs to describe the new device's messages.
 
 ### Breaking Changes
@@ -240,7 +241,7 @@ Each proto file has a corresponding `.options` file that configures:
 Example (`device_adc.options`):
 
 ```
-ringbahn.v1.ADCState.values max_count:8
+ringbahn.ADCState.values max_count:8
 ```
 
 ## 🔄 Migration from Old Structure
@@ -250,7 +251,7 @@ The repository has been restructured for better organization. If you're migratin
 1. Old proto files are in `proto/` (root level)
 2. New proto files are organized in subdirectories
 3. CMakeLists.txt supports both old (`nanopb/`) and new (`generated/nanopb/`) output paths
-4. Package names now include version: `ringbahn.v1`
+4. Package names now include version: `ringbahn`
 
 ## 📚 Additional Resources
 
@@ -267,8 +268,8 @@ See [LICENSE](LICENSE) file for details.
 
 1. Create a feature branch
 2. Make your changes
-3. Run `./scripts/validate.sh` to ensure proto files are valid
-4. Test with `./scripts/generate.sh`
+3. Run `buf build` and `buf lint`
+4. Run `buf generate`
 5. Submit a pull request
 
 ## 📞 Support

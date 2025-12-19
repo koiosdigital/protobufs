@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "devices/device_common.proto";
+import "ringbahn/v1/device_common.proto";
 
 // Top-level Rover device command message
 message RoverDeviceCommand {
@@ -11,7 +11,7 @@ message RoverDeviceCommand {
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
     ResetCommand reset = 3; // Response: CommandResult
-    
+
     // Rover-specific commands
     RoverMovementCommand movement = 10; // Response: AcknowledgeResponse
     RoverGetStateRequest get_state = 11; // Response: RoverDeviceState

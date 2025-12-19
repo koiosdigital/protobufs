@@ -6,14 +6,12 @@ on:
     paths:
       - "proto/**/*.proto"
       - "CMakeLists.txt"
-      - "scripts/generate.sh"
       - ".github/workflows/build.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "proto/**/*.proto"
       - "CMakeLists.txt"
-      - "scripts/generate.sh"
       - ".github/workflows/build.yml"
 
 jobs:
@@ -25,25 +23,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "25.x"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install nanopb
         run: |
           pip install nanopb
 
-      - name: Generate nanopb code
-        run: |
-          chmod +x scripts/generate.sh
-          ./scripts/generate.sh
+      - name: Buf build
+        run: buf build
+
+      - name: Buf generate
+        run: buf generate
 
       - name: Verify generated files
         run: |
@@ -76,6 +74,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -86,6 +89,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake protobuf-compiler
           pip install nanopb
+
+      - name: Buf build
+        run: buf build
 
       - name: Configure CMake
         run: |
@@ -115,6 +121,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -125,6 +136,9 @@ jobs:
         with:
           version: "25.x"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Buf build
+        run: buf build
 
       - name: Install dependencies
         run: |
@@ -168,6 +182,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -178,6 +197,9 @@ jobs:
         with:
           version: "25.x"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Buf build
+        run: buf build
 
       - name: Install protoc-gen-go
         run: |

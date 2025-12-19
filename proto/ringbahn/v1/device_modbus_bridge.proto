@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "devices/device_common.proto";
+import "ringbahn/v1/device_common.proto";
 
 // Top-level Modbus Bridge device command message
 message ModbusBridgeDeviceCommand {
@@ -11,7 +11,7 @@ message ModbusBridgeDeviceCommand {
     SystemInfoRequest system_info = 1; // Response: SystemInfoResponse
     PingCommand ping = 2; // Response: CommandResult
     ResetCommand reset = 3; // Response: CommandResult
-    
+
     // Modbus-specific commands
     ModbusReadCoilsRequest read_coils = 10; // Response: ModbusReadCoilsResponse
     ModbusReadDiscreteInputsRequest read_discrete_inputs = 11; // Response: ModbusReadDiscreteInputsResponse

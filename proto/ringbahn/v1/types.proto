@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ringbahn.v1;
 
-import "common/enums.proto";
+import "ringbahn/v1/enums.proto";
 
 // 12-byte identifier carried inside Ringbahn frames
 message DeviceUUID {

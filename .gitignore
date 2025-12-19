@@ -24,7 +24,11 @@ cmake-build-*/
 libprotobufs.a
 
 # IDE files
-.vscode/
+# Commit workspace recommendations/tasks/settings.
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo

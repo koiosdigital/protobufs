@@ -1,0 +1,15 @@
+version: v2
+
+plugins:
+  # Nanopb (C) generation. Requires `protoc-gen-nanopb` in PATH.
+  # Keeps the same .options lookup behavior as scripts/generate.sh via -Iproto.
+  - local: protoc-gen-nanopb
+    out: generated/nanopb
+    opt:
+      - -Iproto
+
+  # Modern TypeScript generation using @bufbuild/protobuf runtime.
+  - remote: buf.build/bufbuild/es
+    out: generated/ts
+    opt:
+      - target=ts
