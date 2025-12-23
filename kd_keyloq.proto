@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package kd;
+
+enum KeyloqDataFormat {
+    UNKNOWN = 0;
+    CLOCK_DATA = 1; //Clock data format
+    WIEGAND = 2; //Wiegand data format
+}
+
+message KDKeyloqMessage {
+    oneof message {
+        ReportActivity report_activity = 1; //to server
+        ReplayActivity replay_activity = 2; //from server
+    }
+}
+
+message ReportActivity {
+    KeyloqDataFormat activity_format = 1; //format of the data
+    bytes activity_data = 2;
+}
+
+message ReplayActivity {
+    KeyloqDataFormat activity_format = 1; //format of the data
+    bytes activity_data = 2;
+}

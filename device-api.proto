@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package kd;
+
+import "kd_global.proto";
+import "kd_matrx.proto";
+import "kd_lantern.proto";
+import "kd_keyloq.proto";
+
+message DeviceAPIMessage {
+    oneof message {
+        KDGlobalMessage kd_global_message = 1;
+        KDMatrxMessage kd_matrx_message = 2;
+        KDLanternMessage kd_lantern_message = 3;
+        KDKeyloqMessage kd_keyloq_message = 4;
+    }
+}

@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package kd;
+
+message KDGlobalMessage {
+    oneof message {
+        //Requests
+        InitiateClaimSession initiate_claim_session = 2; //to server
+        GetClaimSessionStatus get_claim_session_status = 3; //to server
+        EndClaimSession end_claim_session = 4; //to server
+        UploadCoreDump upload_core_dump = 5; //to server
+        
+        //Responses
+        ClaimSessionStarted claim_session_started = 100; //from server
+        ClaimSessionStatus claim_session_status = 102; //from server
+        ClaimSessionEnded claim_session_ended = 101; //from server
+        JoinResponse join_response = 200; //from server
+        OKResponse ok_response = 201; //from server
+        ErrorResponse error_response = 202; //from server
+    }
+}
+
+message InitiateClaimSession {
+
+}
+
+message GetClaimSessionStatus {
+
+}
+
+message EndClaimSession {
+
+}
+
+message ClaimSessionStarted {
+    string device_code = 1;
+}
+
+message ClaimSessionStatus {
+    bool is_active = 1;
+    bool is_completed = 2;
+}
+
+message ClaimSessionEnded {
+    bool was_successful = 1;
+}
+
+
+message OKResponse {
+    bool success = 1;
+}
+
+message ErrorResponse {
+    string error_message = 1;
+}
+
+message JoinResponse {
+    bool success = 1;
+    bool is_claimed = 2;
+}
+
+message UploadCoreDump {
+    bytes core_dump = 1;
+    string firmware_project = 2;
+    string firmware_version = 3;
+    string firmware_variant = 4;
+}
