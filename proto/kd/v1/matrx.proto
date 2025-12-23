@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+import "kd/v1/common.proto";
+
+package kd.v1;
+
+message MatrxMessage {
+    oneof message {
+        ScheduleRequest schedule_request = 1; //to server - returns CommandResult
+        SpriteRenderRequest sprite_render_request = 2; //to server - returns CommandResult
+        ModifyScheduleItem modify_schedule_item = 3; //to server - returns CommandResult
+
+        MatrxSchedule schedule = 11; //from server
+        MatrxSpriteData sprite_data = 12; //from server
+
+        //common
+        UploadCoreDump upload_core_dump = 101; //to server - returns CommandResult
+        CreateOrCheckUserClaim create_or_check_user_claim = 102; //to server - returns UserClaimStatus
+        UserClaimStatus user_claim_status = 103; //from server
+    }
+}
+
+//MARK: Schedule
+message ScheduleRequest {
+
+}
+
+message ScheduleItem {
+    bytes uuid = 1;
+    uint32 display_time = 2;
+    bool pinned = 3;
+    bool skipped = 4;
+}
+
+message MatrxSchedule {
+    repeated ScheduleItem schedule_items = 1;
+}
+
+//MARK: Render
+message SpriteRenderRequest {
+    bytes sprite_uuid = 1;
+    uint32 device_width = 2;
+    uint32 device_height = 3;
+}
+
+message MatrxSpriteData {
+    bytes sprite_uuid = 1;
+    bytes sprite_data = 2;
+    uint32 ttl_epoch = 3;
+    bool error = 4;
+}
+
+message ModifyScheduleItem {
+    bytes uuid = 1;
+    bool  pinned = 2;
+    bool  skipped = 3;
+}

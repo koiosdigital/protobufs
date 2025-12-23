@@ -1,58 +1,60 @@
-# Prerequisites
-*.d
+# Source directories (if applicable)
+src
+src/**
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# Generated files
+generated/
+*.pb.c
+*.pb.h
+*.pb.py
+*.pb.go
+*_pb2.py
 
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
+# Build files
+Makefile
+cmake_install.cmake
+CMakeFiles/
+CMakeCache.txt
+build/
+cmake-build-*/
+.cmake/
 *.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
 *.so
-*.so.*
 *.dylib
+libprotobufs.a
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# IDE files
+# Commit workspace recommendations/tasks/settings.
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-*.pb-c.c
-*.pb-c.h
-*.ts
-
+# OS files
 .DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# Buf
+.buf/
+
+# Note: Old nanopb/ directory kept for backward compatibility
+# If fully migrated to generated/, uncomment these:
+# nanopb/*.pb.c
+# nanopb/*.pb.h

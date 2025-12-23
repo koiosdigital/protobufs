@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "buf: build (validate)",
+      "type": "shell",
+      "command": "buf",
+      "args": ["build"],
+      "problemMatcher": []
+    },
+    {
+      "label": "buf: lint",
+      "type": "shell",
+      "command": "buf",
+      "args": ["lint"],
+      "problemMatcher": []
+    },
+    {
+      "label": "buf: format (write)",
+      "type": "shell",
+      "command": "buf",
+      "args": ["format", "-w"],
+      "problemMatcher": []
+    },
+    {
+      "label": "buf: generate",
+      "type": "shell",
+      "command": "buf",
+      "args": ["generate"],
+      "problemMatcher": []
+    }
+  ]
+}

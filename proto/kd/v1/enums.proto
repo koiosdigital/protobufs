@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package kd.v1;
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0; // Unknown Device
+  DEVICE_TYPE_MATRX = 1; // Matrx Device
+  DEVICE_TYPE_KEYLOQ = 2; // Keyloq Device
+  DEVICE_TYPE_LANTERN = 3; // Lantern Device
+}
+
+enum UserClaimStatusCode {
+  PENDING = 0;
+  COMPLETED = 1;
+  EXPIRED = 2;
+}
