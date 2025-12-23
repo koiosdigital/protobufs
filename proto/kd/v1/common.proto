@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package kd.v1;
+
+import "kd/v1/enums.proto";
+
+message CommandResult {
+    bool success = 1;
+    int32 error_code = 2;
+    string detail = 3; // Optional human-readable detail
+}
+
+message JoinResponse {
+    bool success = 1;
+    bool is_claimed = 2;
+}
+
+message CreateOrCheckUserClaim {
+    // Empty, server generates OAuth2 device code flow
+    optional string device_code = 1;
+}
+
+message UserClaimStatus {
+    UserClaimStatusCode status = 1;
+    string device_code = 2;
+    optional string access_token = 3;
+    optional string refresh_token = 4;
+}
+
+message UploadCoreDump {
+    bytes core_dump = 1;
+    string firmware_project = 2;
+    string firmware_version = 3;
+    string firmware_variant = 4;
+}

@@ -2,7 +2,7 @@ version: v2
 
 modules:
   - path: proto
-    name: buf.build/terranova/ringbahn
+    name: buf.build/koiosdigital/protobufs
 
 lint:
   use:
