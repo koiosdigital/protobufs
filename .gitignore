@@ -22,6 +22,7 @@ cmake-build-*/
 *.so
 *.dylib
 libprotobufs.a
+buf_codegen.stamp
 
 # IDE files
 # Commit workspace recommendations/tasks/settings.

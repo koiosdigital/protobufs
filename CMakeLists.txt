@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(protobufs C CXX)
-
 # Protocol Buffers / Nanopb (Buf-driven) build
 
 set(PROTO_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/proto")
