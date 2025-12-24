@@ -61,14 +61,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install nanopb
-        run: pip install nanopb
-
       - name: Buf generate
         run: buf generate
 
       - name: Verify generation
         run: |
-          [ -d "generated/nanopb" ] || exit 1
-          find generated/nanopb -name "*.pb.c" | grep -q . || exit 1
+          [ -d "generated/protobuf-c" ] || exit 1
+          find generated/protobuf-c -name "*.pb-c.c" | grep -q . || exit 1
           echo "✅ Build successful"

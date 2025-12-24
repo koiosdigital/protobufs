@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package kd.v1;
+
+import "kd/v1/common.proto";
+
+// BLE Console protocol
+//
+// Transport framing (outside protobuf):
+//   0xA5 <len_hi> <len_lo> <protobuf payload bytes>
+// where len is the big-endian length of the protobuf payload.
+//
+// Field numbering convention:
+//   - Requests use tags 1-99
+//   - Responses use tags 100+
+message ConsoleMessage {
+    oneof payload {
+        // Requests
+        GetCsrRequest get_csr_request = 1;
+        SetDeviceCertRequest set_device_cert_request = 2;
+        ClearDeviceCertRequest clear_device_cert_request = 3;
+        GetDeviceCertRequest get_device_cert_request = 4;
+        GetDsParamsRequest get_ds_params_request = 5;
+        SetDsParamsRequest set_ds_params_request = 6;
+        CryptoStatusRequest crypto_status_request = 7;
+
+        // Responses
+        GetCsrResponse get_csr_response = 101;
+        SetDeviceCertResponse set_device_cert_response = 102;
+        ClearDeviceCertResponse clear_device_cert_response = 103;
+        GetDeviceCertResponse get_device_cert_response = 104;
+        GetDsParamsResponse get_ds_params_response = 105;
+        SetDsParamsResponse set_ds_params_response = 106;
+        CryptoStatusResponse crypto_status_response = 107;
+
+        // Generic error response
+        ErrorResponse error_response = 199;
+    }
+}
+
+message ErrorResponse {
+    CommandResult result = 1;
+}
+
+message GetCsrRequest {}
+message GetCsrResponse {
+    CommandResult result = 1;
+    bytes csr_pem = 2;
+}
+
+message SetDeviceCertRequest {
+    // PEM (raw bytes). If you only have base64 PEM, decode before sending.
+    bytes cert_pem = 1;
+}
+message SetDeviceCertResponse {
+    CommandResult result = 1;
+}
+
+message ClearDeviceCertRequest {}
+message ClearDeviceCertResponse {
+    CommandResult result = 1;
+}
+
+message GetDeviceCertRequest {}
+message GetDeviceCertResponse {
+    CommandResult result = 1;
+    bytes cert_pem = 2;
+}
+
+message GetDsParamsRequest {}
+message GetDsParamsResponse {
+    CommandResult result = 1;
+    // JSON payload matching the existing DS params schema.
+    string ds_params_json = 2;
+}
+
+message SetDsParamsRequest {
+    string ds_params_json = 1;
+}
+message SetDsParamsResponse {
+    CommandResult result = 1;
+}
+
+message CryptoStatusRequest {}
+message CryptoStatusResponse {
+    CommandResult result = 1;
+    int32 status = 2;
+}

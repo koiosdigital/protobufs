@@ -1,0 +1,6 @@
+kd.v1.MatrxSchedule.schedule_items max_count:255
+kd.v1.ScheduleItem.uuid max_size:16
+kd.v1.SpriteRenderRequest.sprite_uuid max_size:16
+kd.v1.MatrxSpriteData.sprite_uuid max_size:16
+kd.v1.MatrxSpriteData.sprite_data max_size:102400
+kd.v1.ModifyScheduleItem.uuid max_size:16

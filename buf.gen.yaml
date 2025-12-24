@@ -1,12 +1,9 @@
 version: v2
 
 plugins:
-  # Nanopb (C) generation. Requires `protoc-gen-nanopb` in PATH.
-  # Keeps the same .options lookup behavior as scripts/generate.sh via -Iproto.
-  - local: protoc-gen-nanopb
-    out: generated/nanopb
-    opt:
-      - -Iproto
+  # protobuf-c (C) generation.
+  - remote: buf.build/community/protobuf-c:v1.5.2
+    out: generated/protobuf-c
 
   # Modern TypeScript generation using @bufbuild/protobuf runtime.
   - remote: buf.build/bufbuild/es
