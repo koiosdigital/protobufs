@@ -13,18 +13,29 @@ message CommandResult {
 message JoinResponse {
     bool success = 1;
     bool is_claimed = 2;
+
+    // When true, the server indicates this device must be claimed before it
+    // can operate normally. Older servers may only populate is_claimed.
+    bool needs_claimed = 3;
+}
+
+// Sent by the device to claim itself to the user's account.
+// The claim token is provisioned to the device out-of-band (e.g. over BLE
+// console during mobile provisioning) and stored in NVS.
+message ClaimDevice {
+    bytes claim_token = 1;
 }
 
 message CreateOrCheckUserClaim {
     // Empty, server generates OAuth2 device code flow
-    optional string device_code = 1;
+    string device_code = 1;
 }
 
 message UserClaimStatus {
     UserClaimStatusCode status = 1;
     string device_code = 2;
-    optional string access_token = 3;
-    optional string refresh_token = 4;
+    string access_token = 3;
+    string refresh_token = 4;
 }
 
 message UploadCoreDump {

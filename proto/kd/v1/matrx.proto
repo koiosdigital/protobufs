@@ -9,15 +9,33 @@ message MatrxMessage {
         ScheduleRequest schedule_request = 1; //to server - returns CommandResult
         SpriteRenderRequest sprite_render_request = 2; //to server - returns CommandResult
         ModifyScheduleItem modify_schedule_item = 3; //to server - returns CommandResult
+        DeviceConfigRequest device_config_request = 4; //either direction - request current device config
 
         MatrxSchedule schedule = 11; //from server
         MatrxSpriteData sprite_data = 12; //from server
+        DeviceConfig device_config = 13; //either direction - device config payload
 
         //common
         UploadCoreDump upload_core_dump = 101; //to server - returns CommandResult
-        CreateOrCheckUserClaim create_or_check_user_claim = 102; //to server - returns UserClaimStatus
-        UserClaimStatus user_claim_status = 103; //from server
+
+        // Sent from server when a connection is established.
+        JoinResponse join_response = 104; //from server
+
+        // Sent to server to claim the device to a user account.
+        ClaimDevice claim_device = 105; //to server
     }
+}
+
+//MARK: Device Config
+message DeviceConfigRequest {
+
+}
+
+message DeviceConfig {
+    bool screen_enabled = 1;
+    uint32 screen_brightness = 2;
+    bool auto_brightness_enabled = 3;
+    uint32 screen_off_lux = 4;
 }
 
 //MARK: Schedule

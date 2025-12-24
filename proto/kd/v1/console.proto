@@ -23,6 +23,7 @@ message ConsoleMessage {
         GetDsParamsRequest get_ds_params_request = 5;
         SetDsParamsRequest set_ds_params_request = 6;
         CryptoStatusRequest crypto_status_request = 7;
+        SetClaimTokenRequest set_claim_token_request = 8;
 
         // Responses
         GetCsrResponse get_csr_response = 101;
@@ -32,6 +33,7 @@ message ConsoleMessage {
         GetDsParamsResponse get_ds_params_response = 105;
         SetDsParamsResponse set_ds_params_response = 106;
         CryptoStatusResponse crypto_status_response = 107;
+        SetClaimTokenResponse set_claim_token_response = 108;
 
         // Generic error response
         ErrorResponse error_response = 199;
@@ -85,4 +87,12 @@ message CryptoStatusRequest {}
 message CryptoStatusResponse {
     CommandResult result = 1;
     int32 status = 2;
+}
+
+message SetClaimTokenRequest {
+    // Opaque claim token (typically JWT). Stored in NVS as-is.
+    bytes claim_token = 1;
+}
+message SetClaimTokenResponse {
+    CommandResult result = 1;
 }
