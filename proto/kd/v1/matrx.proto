@@ -10,6 +10,7 @@ message MatrxMessage {
         SpriteRenderRequest sprite_render_request = 2; //to server - returns CommandResult
         ModifyScheduleItem modify_schedule_item = 3; //to server - returns CommandResult
         DeviceConfigRequest device_config_request = 4; //either direction - request current device config
+        CurrentlyDisplayingUpdate currently_displaying_update = 5; //to server - device reports what is currently displaying
 
         MatrxSchedule schedule = 11; //from server
         MatrxSpriteData sprite_data = 12; //from server
@@ -72,4 +73,9 @@ message ModifyScheduleItem {
     bytes uuid = 1;
     bool  pinned = 2;
     bool  skipped = 3;
+}
+
+//MARK: Currently Displaying
+message CurrentlyDisplayingUpdate {
+    bytes installation_uuid = 1; // UUID of the installation currently being displayed
 }
