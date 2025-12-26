@@ -37,6 +37,8 @@ message DeviceConfig {
     uint32 screen_brightness = 2;
     bool auto_brightness_enabled = 3;
     uint32 screen_off_lux = 4;
+    uint32 device_width = 5;
+    uint32 device_height = 6;
 }
 
 //MARK: Schedule
