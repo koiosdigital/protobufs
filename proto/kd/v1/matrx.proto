@@ -11,12 +11,14 @@ message MatrxMessage {
         ModifyScheduleItem modify_schedule_item = 3; //to server - returns CommandResult
         DeviceConfigRequest device_config_request = 4; //either direction - request current device config
         CurrentlyDisplayingUpdate currently_displaying_update = 5; //to server - device reports what is currently displaying
+        DeviceInfo device_info = 10; //to server - device info payload - returns CommandResult
 
         MatrxSchedule schedule = 11; //from server
         MatrxSpriteData sprite_data = 12; //from server
         DeviceConfig device_config = 13; //either direction - device config payload
 
         //common
+        CommandResult command_result = 100; //from server - generic command response
         UploadCoreDump upload_core_dump = 101; //to server - returns CommandResult
 
         // Sent from server when a connection is established.
@@ -25,6 +27,12 @@ message MatrxMessage {
         // Sent to server to claim the device to a user account.
         ClaimDevice claim_device = 105; //to server
     }
+}
+
+message DeviceInfo {
+    uint32 width = 1;
+    uint32 height = 2;
+    bool has_light_sensor = 3;
 }
 
 //MARK: Device Config
@@ -37,8 +45,6 @@ message DeviceConfig {
     uint32 screen_brightness = 2;
     bool auto_brightness_enabled = 3;
     uint32 screen_off_lux = 4;
-    uint32 device_width = 5;
-    uint32 device_height = 6;
 }
 
 //MARK: Schedule
