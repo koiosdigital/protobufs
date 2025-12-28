@@ -55,8 +55,8 @@ message ScheduleRequest {
 message ScheduleItem {
     bytes uuid = 1;
     uint32 display_time = 2;
-    bool pinned = 3;
-    bool skipped = 4;
+    bool user_pinned = 3;
+    bool user_skipped = 4;
 }
 
 message MatrxSchedule {
@@ -74,16 +74,17 @@ message MatrxSpriteData {
     bytes sprite_uuid = 1;
     bytes sprite_data = 2;
     uint32 ttl_epoch = 3;
-    bool error = 4;
+    bool system_skipped = 4;
+    bool render_error = 5;
 }
 
 message ModifyScheduleItem {
     bytes uuid = 1;
-    bool  pinned = 2;
-    bool  skipped = 3;
+    bool  user_pinned = 2;
+    bool  user_skipped = 3;
 }
 
 //MARK: Currently Displaying
 message CurrentlyDisplayingUpdate {
-    bytes installation_uuid = 1; // UUID of the installation currently being displayed
+    bytes uuid = 1; // UUID of the installation currently being displayed
 }
