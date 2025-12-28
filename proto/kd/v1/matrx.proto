@@ -26,6 +26,9 @@ message MatrxMessage {
 
         // Sent to server to claim the device to a user account.
         ClaimDevice claim_device = 105; //to server
+
+        // Sent from server to trigger factory reset
+        FactoryResetRequest factory_reset_request = 106; //from server
     }
 }
 

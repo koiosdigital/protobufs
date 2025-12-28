@@ -44,3 +44,10 @@ message UploadCoreDump {
     string firmware_version = 3;
     string firmware_variant = 4;
 }
+
+// Sent from server to device to trigger a factory reset.
+// Device should clear all local state and restart.
+message FactoryResetRequest {
+    // Optional reason for the reset (for logging purposes)
+    string reason = 1;
+}
