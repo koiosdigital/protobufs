@@ -6,16 +6,18 @@ package kd.v1;
 
 message MatrxMessage {
     oneof message {
-        ScheduleRequest schedule_request = 1; //to server - returns CommandResult
-        SpriteRenderRequest sprite_render_request = 2; //to server - returns CommandResult
-        ModifyScheduleItem modify_schedule_item = 3; //to server - returns CommandResult
-        DeviceConfigRequest device_config_request = 4; //either direction - request current device config
-        CurrentlyDisplayingUpdate currently_displaying_update = 5; //to server - device reports what is currently displaying
-        DeviceInfo device_info = 10; //to server - device info payload - returns CommandResult
+        ScheduleRequest schedule_request = 1;
+        Schedule schedule = 2;
+        ScheduleItemSetPinState schedule_item_set_pin_state = 3;
 
-        MatrxSchedule schedule = 11; //from server
-        MatrxSpriteData sprite_data = 12; //from server
-        DeviceConfig device_config = 13; //either direction - device config payload
+        AppRenderRequest app_render_request = 4;
+        AppRenderResponse app_render_response = 5;
+
+        DeviceConfigRequest device_config_request = 6;
+        DeviceConfig device_config = 7;
+
+        CurrentlyDisplayingApp currently_displaying_app = 8; //to server - device reports what is currently displaying
+        DeviceInfo device_info = 9; //to server - device info payload - returns CommandResult
 
         //common
         CommandResult command_result = 100; //from server - generic command response
@@ -54,7 +56,6 @@ message DeviceConfig {
     uint32 screen_off_lux = 4;
 }
 
-//MARK: Schedule
 message ScheduleRequest {
 
 }
@@ -66,29 +67,27 @@ message ScheduleItem {
     bool skipped = 4;
 }
 
-message MatrxSchedule {
+message Schedule {
     repeated ScheduleItem schedule_items = 1;
 }
 
 //MARK: Render
-message SpriteRenderRequest {
-    bytes sprite_uuid = 1;
-    uint32 device_width = 2;
-    uint32 device_height = 3;
+message AppRenderRequest {
+    bytes app_uuid = 1;
+    bytes data_sha256 = 2;
 }
 
-message MatrxSpriteData {
-    bytes sprite_uuid = 1;
-    bytes sprite_data = 2;
+message AppRenderResponse {
+    bytes app_uuid = 1;
+    bytes app_data = 2;
+    bytes data_sha256 = 3;
 }
 
-message ModifyScheduleItem {
+message ScheduleItemSetPinState {
     bytes uuid = 1;
-    bool  pinned = 2;
-    bool  skipped = 3;
+    bool pinned = 2;
 }
 
-//MARK: Currently Displaying
-message CurrentlyDisplayingUpdate {
+message CurrentlyDisplayingApp {
     bytes uuid = 1; // UUID of the installation currently being displayed
 }
