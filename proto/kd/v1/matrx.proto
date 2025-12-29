@@ -62,8 +62,8 @@ message ScheduleRequest {
 message ScheduleItem {
     bytes uuid = 1;
     uint32 display_time = 2;
-    bool user_pinned = 3;
-    bool user_skipped = 4;
+    bool pinned = 3;
+    bool skipped = 4;
 }
 
 message MatrxSchedule {
@@ -80,15 +80,12 @@ message SpriteRenderRequest {
 message MatrxSpriteData {
     bytes sprite_uuid = 1;
     bytes sprite_data = 2;
-    uint32 ttl_epoch = 3;
-    bool system_skipped = 4;
-    bool render_error = 5;
 }
 
 message ModifyScheduleItem {
     bytes uuid = 1;
-    bool  user_pinned = 2;
-    bool  user_skipped = 3;
+    bool  pinned = 2;
+    bool  skipped = 3;
 }
 
 //MARK: Currently Displaying
