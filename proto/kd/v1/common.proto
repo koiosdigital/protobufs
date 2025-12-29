@@ -52,14 +52,26 @@ message FactoryResetRequest {
     string reason = 1;
 }
 
-// Sent from device to server to request certificate renewal.
-message RenewCertRequest {
+// Sent from device to server to report current certificate.
+message CertReport {
+    // PEM-encoded current device certificate
+    bytes current_cert = 1;
+}
+
+// Sent from server to device when certificate renewal is required.
+message CertRenewRequired {
+    // Optional reason (e.g., "expiring soon", "revoked")
+    string reason = 1;
+}
+
+// Sent from device to server with CSR for renewal.
+message CertRenewRequest {
     // PEM-encoded Certificate Signing Request (CSR)
     bytes csr = 1;
 }
 
 // Sent from server to device with the new certificate.
-message CertResponse {
+message CertRenewResponse {
     bool success = 1;
     // PEM-encoded device certificate (only set if success=true)
     bytes device_cert = 2;

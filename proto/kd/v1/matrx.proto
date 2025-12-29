@@ -32,9 +32,11 @@ message MatrxMessage {
         // Sent from server to trigger factory reset
         FactoryResetRequest factory_reset_request = 106; //from server
 
-        // Certificate renewal
-        RenewCertRequest renew_cert_request = 107; //to server
-        CertResponse cert_response = 108; //from server
+        // Certificate management
+        CertReport cert_report = 107; //to server - device reports current cert
+        CertRenewRequired cert_renew_required = 108; //from server - server requests renewal
+        CertRenewRequest cert_renew_request = 109; //to server - device sends CSR
+        CertRenewResponse cert_renew_response = 110; //from server - server sends new cert
     }
 }
 
