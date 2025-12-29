@@ -38,65 +38,31 @@ _glob_recurse_optional(PROTO_SRCS "${PROTO_BASE_DIR}/*.proto")
 # ESP-IDF can evaluate parts of the build graph during an "early expansion"
 # phase. We must avoid executing side-effectful commands there.
 #
-# We still want configure-time codegen, but only when inputs change, so we keep
-# a hash stamp in the build directory.
+# Always regenerate on every configure to ensure CI builds work correctly.
 # ---------------------------------------------------------------------------
 
-set(BUF_CODEGEN_STAMP "${CMAKE_CURRENT_BINARY_DIR}/buf_codegen.stamp")
-
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    set(BUF_CODEGEN_INPUTS
-        ${PROTO_SRCS}
-        "${CMAKE_CURRENT_LIST_DIR}/buf.yaml"
-        "${CMAKE_CURRENT_LIST_DIR}/buf.gen.yaml"
+    message(STATUS "Generating protobuf-c sources via buf (configure-time)")
+    execute_process(
+        COMMAND "${BUF_EXECUTABLE}" generate --template "${BUF_TEMPLATE}"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        RESULT_VARIABLE BUF_GEN_RESULT
+        OUTPUT_VARIABLE BUF_GEN_STDOUT
+        ERROR_VARIABLE BUF_GEN_STDERR
     )
 
-    set(_buf_hash_material "")
-    foreach(_f IN LISTS BUF_CODEGEN_INPUTS)
-        if(NOT EXISTS "${_f}")
-            message(FATAL_ERROR "Missing buf codegen input: ${_f}")
-        endif()
-        file(SHA256 "${_f}" _f_sha)
-        string(APPEND _buf_hash_material "${_f}|${_f_sha};")
-    endforeach()
-    string(SHA256 BUF_CODEGEN_HASH "${_buf_hash_material}")
-
-    set(_run_buf_codegen TRUE)
-    if(EXISTS "${BUF_CODEGEN_STAMP}")
-        file(READ "${BUF_CODEGEN_STAMP}" _prev_hash)
-        string(STRIP "${_prev_hash}" _prev_hash)
-        if(_prev_hash STREQUAL BUF_CODEGEN_HASH)
-            set(_run_buf_codegen FALSE)
-        endif()
-    endif()
-
-    if(_run_buf_codegen)
-        message(STATUS "Generating protobuf-c sources via buf (configure-time)")
-        execute_process(
-            COMMAND "${BUF_EXECUTABLE}" generate --template "${BUF_TEMPLATE}"
-            WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-            RESULT_VARIABLE BUF_GEN_RESULT
-            OUTPUT_VARIABLE BUF_GEN_STDOUT
-            ERROR_VARIABLE BUF_GEN_STDERR
+    if(NOT BUF_GEN_RESULT EQUAL 0)
+        message(FATAL_ERROR
+            "buf generate failed with exit code ${BUF_GEN_RESULT}.\n"
+            "stdout:\n${BUF_GEN_STDOUT}\n"
+            "stderr:\n${BUF_GEN_STDERR}\n"
         )
-
-        if(NOT BUF_GEN_RESULT EQUAL 0)
-            message(FATAL_ERROR
-                "buf generate failed with exit code ${BUF_GEN_RESULT}.\n"
-                "stdout:\n${BUF_GEN_STDOUT}\n"
-                "stderr:\n${BUF_GEN_STDERR}\n"
-            )
-        endif()
-
-        file(WRITE "${BUF_CODEGEN_STAMP}" "${BUF_CODEGEN_HASH}\n")
-    else()
-        message(STATUS "Protobuf-c sources up-to-date (buf codegen skipped)")
     endif()
 endif()
 
-    # Generated protobuf-c sources (do not hardcode filenames)
-    # Note: re-glob after optional configure-time generation above.
-    _glob_recurse_optional(PROTOBUF_C_GEN_SRCS "${PROTOBUF_C_OUT_PATH}/*.pb-c.c")
+# Generated protobuf-c sources (do not hardcode filenames)
+# Note: re-glob after configure-time generation above.
+_glob_recurse_optional(PROTOBUF_C_GEN_SRCS "${PROTOBUF_C_OUT_PATH}/*.pb-c.c")
 
 if(NOT CMAKE_SCRIPT_MODE_FILE AND NOT CMAKE_BUILD_EARLY_EXPANSION)
     add_custom_target(protobufs_generate
@@ -163,4 +129,3 @@ else()
     endif()
     set(_PROTOBUF_TARGET protobufs)
 endif()
-
