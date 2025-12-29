@@ -29,6 +29,10 @@ message MatrxMessage {
 
         // Sent from server to trigger factory reset
         FactoryResetRequest factory_reset_request = 106; //from server
+
+        // Certificate renewal
+        RenewCertRequest renew_cert_request = 107; //to server
+        CertResponse cert_response = 108; //from server
     }
 }
 
