@@ -6,7 +6,9 @@ set(PROTO_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/proto")
 set(PROTOBUF_C_OUT_PATH "${CMAKE_CURRENT_LIST_DIR}/generated/protobuf-c")
 set(BUF_TEMPLATE "${CMAKE_CURRENT_LIST_DIR}/buf.gen.yaml")
 
-find_program(BUF_EXECUTABLE buf)
+# Force re-finding buf on every configure to avoid stale cache paths
+unset(BUF_EXECUTABLE CACHE)
+find_program(BUF_EXECUTABLE buf REQUIRED)
 if(NOT BUF_EXECUTABLE)
     message(FATAL_ERROR "buf not found. Install buf and ensure it is on PATH.")
 endif()
