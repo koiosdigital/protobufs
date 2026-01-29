@@ -7,6 +7,7 @@ enum DeviceType {
   DEVICE_TYPE_MATRX = 1; // Matrx Device
   DEVICE_TYPE_KEYLOQ = 2; // Keyloq Device
   DEVICE_TYPE_LANTERN = 3; // Lantern Device
+  DEVICE_TYPE_TRANQUIL = 4; // Tranquil Device
 }
 
 enum UserClaimStatusCode {
