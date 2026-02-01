@@ -1,0 +1,440 @@
+syntax = "proto3";
+
+import "kd/v1/common.proto";
+
+package kd.v1;
+
+message TranquilMessage {
+    oneof message {
+        // Schedule (cloud sync)
+        TranquilScheduleRequest schedule_request = 1;
+        TranquilSchedule schedule = 2;
+
+        // Pattern management
+        DownloadedPatternsRequest downloaded_patterns_request = 3;
+        DownloadedPatterns downloaded_patterns = 4;
+        ModifyPattern modify_pattern = 5;
+        RequestPatternDownload request_pattern_download = 6;
+        PatternDownloadResponse pattern_download_response = 7;
+        DeletePattern delete_pattern = 40;
+        GetPatternRequest get_pattern_request = 41;
+        PatternInfo pattern_info = 42;
+
+        // Playlist management
+        PlaylistsRequest playlists_request = 8;
+        Playlists playlists = 9;
+        CreatePlaylist create_playlist = 43;
+        UpdatePlaylist update_playlist = 44;
+        DeletePlaylist delete_playlist = 45;
+
+        // LED configuration
+        LEDConfigRequest led_config_request = 10;
+        LEDConfig led_config = 11;
+        SetLEDChannel set_led_channel = 46;
+        GetLEDEffects get_led_effects = 47;
+        LEDEffectsList led_effects_list = 48;
+
+        // Player control
+        PlayPattern play_pattern = 12;
+        SetPaused set_paused = 13;
+        PlaylistPlay playlist_play = 14;
+        PlaylistSetShuffle set_shuffle = 15;
+        PlaylistNavigateCommand playlist_navigate_command = 16;
+        StopPlayback stop_playback = 49;
+        SetFeedRate set_feed_rate = 50;
+        SetLoop set_loop = 51;
+        GetPlayerState get_player_state = 52;
+        PlayerState player_state = 53;
+
+        // Motion/LED Configuration (NVS-backed)
+        GetConfigRequest get_config_request = 20;
+        GetConfigResponse get_config_response = 21;
+        SetConfigRequest set_config_request = 22;
+        SetConfigResponse set_config_response = 23;
+
+        // Presets
+        ListPresetsRequest list_presets_request = 24;
+        ListPresetsResponse list_presets_response = 25;
+        LoadPresetRequest load_preset_request = 26;
+        LoadPresetResponse load_preset_response = 27;
+
+        // Calibration
+        ClearCalibrationRequest clear_calibration_request = 28;
+        ClearCalibrationResponse clear_calibration_response = 29;
+
+        // Homing
+        HomeRequest home_request = 30;
+        HomeResponse home_response = 31;
+
+        // System
+        GetSystemInfo get_system_info = 54;
+        SystemInfo system_info = 55;
+        Ping ping = 120;
+        Pong pong = 121;
+
+        // Common
+        CommandResult command_result = 100;
+        UploadCoreDump upload_core_dump = 101;
+        JoinResponse join_response = 104;
+        ClaimDevice claim_device = 105;
+        FactoryResetRequest factory_reset_request = 106;
+
+        // Certificate management
+        CertReport cert_report = 107;
+        CertRenewRequired cert_renew_required = 108;
+        CertRenewRequest cert_renew_request = 109;
+        CertRenewResponse cert_renew_response = 110;
+    }
+}
+
+// =============================================================================
+// Pattern Messages
+// =============================================================================
+
+message RequestPatternDownload {
+    string pattern_uuid = 1;
+}
+
+// Response to RequestPatternDownload - contains auth token and URL for HTTP download
+message PatternDownloadResponse {
+    string pattern_uuid = 3;
+    string download_url = 4;    // URL to download pattern data from
+    string token = 5;           // Authorization token (use as Bearer token)
+    PatternInfo pattern = 6;    // Pattern metadata to add to manifest
+}
+
+message DownloadedPatternsRequest {}
+
+message DownloadedPatterns {
+    repeated PatternInfo patterns = 1;
+}
+
+message PatternInfo {
+    string uuid = 1;
+    string name = 2;
+    string creator = 3;
+    bool encrypted = 4;
+    uint32 size_bytes = 5;
+    bool reversible = 6;
+    uint32 start_point = 7;  // 0=center, 1=edge
+    string created_at = 8;
+    string last_played_at = 9;
+}
+
+message ModifyPattern {
+    string uuid = 1;
+    string name = 2;        // Update name if set
+}
+
+message DeletePattern {
+    string uuid = 1;
+}
+
+message GetPatternRequest {
+    string uuid = 1;
+}
+
+// =============================================================================
+// Playlist Messages
+// =============================================================================
+
+message PlaylistsRequest {}
+
+message Playlists {
+    repeated PlaylistInfo playlists = 1;
+}
+
+message PlaylistInfo {
+    string uuid = 1;
+    string name = 2;
+    string description = 3;
+    repeated string pattern_uuids = 4;
+    string featured_pattern = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+
+message CreatePlaylist {
+    string name = 1;
+    string description = 2;
+    repeated string pattern_uuids = 3;
+}
+
+message UpdatePlaylist {
+    string uuid = 1;
+    string name = 2;
+    string description = 3;
+    repeated string pattern_uuids = 4;
+    string featured_pattern = 5;
+}
+
+message DeletePlaylist {
+    string uuid = 1;
+}
+
+// =============================================================================
+// Player Control Messages
+// =============================================================================
+
+message PlayPattern {
+    string pattern_uuid = 1;
+}
+
+message SetPaused {
+    bool paused = 1;
+}
+
+message PlaylistPlay {
+    string playlist_uuid = 1;
+    bool shuffle = 2;
+    bool loop = 3;
+    string start_pattern_uuid = 4;  // Optional: start from specific pattern
+}
+
+message PlaylistSetShuffle {
+    bool shuffle = 1;
+}
+
+message PlaylistNavigateCommand {
+    enum Direction {
+        DIRECTION_UNSPECIFIED = 0;
+        DIRECTION_NEXT = 1;
+        DIRECTION_PREVIOUS = 2;
+    }
+    Direction direction = 1;
+}
+
+message StopPlayback {}
+
+message SetFeedRate {
+    float feed_rate_rpm = 1;
+}
+
+message SetLoop {
+    bool enabled = 1;
+}
+
+message GetPlayerState {}
+
+message PlayerState {
+    enum PlaybackState {
+        PLAYBACK_STATE_UNSPECIFIED = 0;
+        PLAYBACK_STATE_STOPPED = 1;
+        PLAYBACK_STATE_PLAYING = 2;
+        PLAYBACK_STATE_PAUSED = 3;
+    }
+    enum PlayMode {
+        PLAY_MODE_UNSPECIFIED = 0;
+        PLAY_MODE_SINGLE = 1;
+        PLAY_MODE_PLAYLIST = 2;
+        PLAY_MODE_PLAYLIST_LOOP = 3;
+        PLAY_MODE_PLAYLIST_SHUFFLE = 4;
+    }
+    PlaybackState state = 1;
+    PlayMode mode = 2;
+    string current_pattern_uuid = 3;
+    string current_playlist_uuid = 4;
+    uint32 progress_percent = 5;
+    uint32 pattern_index = 6;
+    uint32 playlist_size = 7;
+    float feed_rate = 8;
+    bool shuffle = 9;
+    bool loop = 10;
+}
+
+// =============================================================================
+// LED Control Messages
+// =============================================================================
+
+message LEDConfigRequest {}
+
+message LEDConfig {
+    bool has_leds = 1;
+    uint32 led_count = 2;
+    bool is_rgbw = 3;
+    string pixdriver_version = 4;
+}
+
+message LEDColor {
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+    uint32 w = 4;  // Optional for RGBW
+}
+
+message SetLEDChannel {
+    uint32 channel = 1;
+    string effect_id = 2;
+    uint32 brightness = 3;
+    uint32 speed = 4;
+    bool enabled = 5;
+    LEDColor color = 6;
+}
+
+message GetLEDEffects {}
+
+message LEDEffectInfo {
+    string id = 1;
+    string name = 2;
+}
+
+message LEDEffectsList {
+    repeated LEDEffectInfo effects = 1;
+}
+
+// =============================================================================
+// System Messages
+// =============================================================================
+
+message GetSystemInfo {}
+
+message SystemInfo {
+    string firmware_version = 1;
+    string hardware_model = 2;
+    string device_id = 3;
+    bool is_homed = 4;
+    uint32 free_heap = 5;
+    string hostname = 6;
+}
+
+message Ping {
+    uint64 timestamp = 1;
+}
+
+message Pong {
+    uint64 timestamp = 1;
+}
+
+// =============================================================================
+// Scheduling Messages
+// =============================================================================
+message TranquilScheduleRequest {}
+
+message ScheduleAction {
+    enum ScheduleActionType {
+        SCHEDULE_ACTION_TYPE_UNSPECIFIED = 0;
+        SCHEDULE_ACTION_TYPE_LED_OFF = 1;
+        SCHEDULE_ACTION_TYPE_LED_ON = 2;
+        SCHEDULE_ACTION_TYPE_PLAY_RANDOM_PATTERN = 3;
+        SCHEDULE_ACTION_TYPE_PLAY_PLAYLIST = 4;
+        SCHEDULE_ACTION_TYPE_PLAY_PATTERN = 5;
+    }
+    ScheduleActionType type = 1;
+    string uuid = 2; //used only for play_playlist / play_pattern;
+}
+
+message TranquilScheduleItem {
+    uint32 days_of_week = 1;
+    uint32 time_of_day = 2;
+    ScheduleAction action = 3;
+}
+
+message TranquilSchedule {
+    repeated TranquilScheduleItem schedule_items = 1;
+}
+
+// =============================================================================
+// Motion/LED Configuration Messages
+// =============================================================================
+
+// Motion configuration - runtime adjustable parameters
+message MotionConfigProto {
+    uint32 steps_per_rev = 1;
+    uint32 microsteps = 2;
+    int32 theta_gear_ratio_x100 = 3;
+    int32 pinion_diameter_mm = 4;
+    int32 theta_max_rpm = 5;
+    int32 rho_max_rpm = 6;
+    uint32 theta_current_ma = 7;
+    uint32 rho_current_ma = 8;
+    uint32 stallguard_threshold = 9;
+    float default_accel_mm_s2 = 10;
+    float max_accel_mm_s2 = 11;
+}
+
+// LED configuration
+message LEDConfigProto {
+    bool has_leds = 1;
+    uint32 led_count = 2;
+    bool is_rgbw = 3;
+}
+
+// Calibration data from homing
+message CalibrationDataProto {
+    int32 theta_steps_per_rotation = 1;
+    int32 rho_max_steps = 2;
+    bool is_valid = 3;
+    uint32 timestamp = 4;
+}
+
+// Get full configuration
+message GetConfigRequest {}
+
+message GetConfigResponse {
+    MotionConfigProto motion = 1;
+    LEDConfigProto led = 2;
+    CalibrationDataProto calibration = 3;
+    string active_preset_id = 4;
+}
+
+// Set configuration (partial update supported)
+message SetConfigRequest {
+    MotionConfigProto motion = 1;
+    LEDConfigProto led = 2;
+}
+
+message SetConfigResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+// =============================================================================
+// Preset Messages
+// =============================================================================
+
+message PresetInfoProto {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message ListPresetsRequest {}
+
+message ListPresetsResponse {
+    repeated PresetInfoProto presets = 1;
+    string active_preset_id = 2;
+}
+
+message LoadPresetRequest {
+    string preset_id = 1;
+}
+
+message LoadPresetResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+// =============================================================================
+// Calibration Control Messages
+// =============================================================================
+
+message ClearCalibrationRequest {}
+
+message ClearCalibrationResponse {
+    bool success = 1;
+}
+
+// =============================================================================
+// Homing Messages
+// =============================================================================
+
+message HomeRequest {
+    bool force_full_calibration = 1;
+}
+
+message HomeResponse {
+    bool success = 1;
+    CalibrationDataProto calibration = 2;
+    bool used_cached_calibration = 3;
+    string error = 4;
+}

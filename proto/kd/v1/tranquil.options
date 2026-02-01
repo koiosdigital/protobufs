@@ -1,0 +1,116 @@
+# =============================================================================
+# Tranquil Sand Table - nanopb options
+# =============================================================================
+
+# Schedule messages (shared with matrx)
+kd.v1.TranquilSchedule.schedule_items max_count:16
+kd.v1.ScheTranquilScheduleItem.uuid max_size:40
+
+# =============================================================================
+# Pattern messages
+# =============================================================================
+kd.v1.RequestPatternDownload.pattern_uuid max_size:40
+
+kd.v1.PatternDownloadResponse.error max_size:256
+kd.v1.PatternDownloadResponse.pattern_uuid max_size:40
+kd.v1.PatternDownloadResponse.download_url max_size:512
+kd.v1.PatternDownloadResponse.token max_size:512
+
+kd.v1.DownloadedPatterns.patterns max_count:100
+
+kd.v1.PatternInfo.uuid max_size:40
+kd.v1.PatternInfo.name max_size:128
+kd.v1.PatternInfo.creator max_size:64
+kd.v1.PatternInfo.created_at max_size:32
+kd.v1.PatternInfo.last_played_at max_size:32
+
+kd.v1.ModifyPattern.uuid max_size:40
+kd.v1.ModifyPattern.name max_size:128
+
+kd.v1.DeletePattern.uuid max_size:40
+
+kd.v1.GetPatternRequest.uuid max_size:40
+
+# =============================================================================
+# Playlist messages
+# =============================================================================
+kd.v1.Playlists.playlists max_count:50
+
+kd.v1.PlaylistInfo.uuid max_size:40
+kd.v1.PlaylistInfo.name max_size:128
+kd.v1.PlaylistInfo.description max_size:512
+kd.v1.PlaylistInfo.pattern_uuids max_count:500
+kd.v1.PlaylistInfo.pattern_uuids max_size:40
+kd.v1.PlaylistInfo.featured_pattern max_size:40
+kd.v1.PlaylistInfo.created_at max_size:32
+kd.v1.PlaylistInfo.updated_at max_size:32
+
+kd.v1.CreatePlaylist.name max_size:128
+kd.v1.CreatePlaylist.description max_size:512
+kd.v1.CreatePlaylist.pattern_uuids max_count:500
+kd.v1.CreatePlaylist.pattern_uuids max_size:40
+
+kd.v1.UpdatePlaylist.uuid max_size:40
+kd.v1.UpdatePlaylist.name max_size:128
+kd.v1.UpdatePlaylist.description max_size:512
+kd.v1.UpdatePlaylist.pattern_uuids max_count:500
+kd.v1.UpdatePlaylist.pattern_uuids max_size:40
+kd.v1.UpdatePlaylist.featured_pattern max_size:40
+
+kd.v1.DeletePlaylist.uuid max_size:40
+
+# =============================================================================
+# Player control messages
+# =============================================================================
+kd.v1.PlayPattern.pattern_uuid max_size:40
+
+kd.v1.PlaylistPlay.playlist_uuid max_size:40
+kd.v1.PlaylistPlay.start_pattern_uuid max_size:40
+
+kd.v1.PlayerState.current_pattern_uuid max_size:40
+kd.v1.PlayerState.current_playlist_uuid max_size:40
+
+# =============================================================================
+# LED messages
+# =============================================================================
+kd.v1.LEDConfig.pixdriver_version max_size:32
+kd.v1.SetLEDChannel.effect_id max_size:32
+
+kd.v1.LEDEffectInfo.id max_size:32
+kd.v1.LEDEffectInfo.name max_size:64
+
+kd.v1.LEDEffectsList.effects max_count:20
+
+# =============================================================================
+# System messages
+# =============================================================================
+kd.v1.SystemInfo.firmware_version max_size:32
+kd.v1.SystemInfo.hardware_model max_size:32
+kd.v1.SystemInfo.device_id max_size:64
+kd.v1.SystemInfo.hostname max_size:64
+
+# =============================================================================
+# Config messages
+# =============================================================================
+kd.v1.GetConfigResponse.active_preset_id max_size:32
+
+kd.v1.SetConfigResponse.error max_size:128
+
+# =============================================================================
+# Preset messages
+# =============================================================================
+kd.v1.PresetInfoProto.id max_size:32
+kd.v1.PresetInfoProto.name max_size:64
+kd.v1.PresetInfoProto.description max_size:256
+
+kd.v1.ListPresetsResponse.presets max_count:20
+kd.v1.ListPresetsResponse.active_preset_id max_size:32
+
+kd.v1.LoadPresetRequest.preset_id max_size:32
+
+kd.v1.LoadPresetResponse.error max_size:128
+
+# =============================================================================
+# Homing messages
+# =============================================================================
+kd.v1.HomeResponse.error max_size:128

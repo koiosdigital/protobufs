@@ -21,12 +21,13 @@ message TouchEventResponse {
 }
 
 enum LEDEffect {
-    OFF = 0;
-    SOLID = 1;
-    FLASH = 2;
-    BREATHING = 3;
-    CYCLE = 4;
-    RAINBOW = 5;
+    LED_EFFECT_UNSPECIFIED = 0;
+    LED_EFFECT_OFF = 1;
+    LED_EFFECT_SOLID = 2;
+    LED_EFFECT_FLASH = 3;
+    LED_EFFECT_BREATHING = 4;
+    LED_EFFECT_CYCLE = 5;
+    LED_EFFECT_RAINBOW = 6;
 }
 
 message SetColor {
