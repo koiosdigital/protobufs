@@ -98,6 +98,9 @@ message TranquilMessage {
         LicenseResponse license_response = 112; //N/A - not used &&& from server with signed license payload
         GetStoreTokenRequest get_store_token_request = 113; //from local client, responds with StoreTokenResponse &&& N/A - not used
         StoreTokenResponse store_token_response = 114; //response to above &&& N/A - not used
+        // Purchase receipt sync
+        SyncPurchasesRequest sync_purchases_request = 115; //N/A - not used &&& sent to server on boot to sync purchased patterns
+        SyncPurchasesResponse sync_purchases_response = 116; //N/A - not used &&& from server with all purchase receipts for this device
     }
 }
 
@@ -114,6 +117,9 @@ message PatternDownloadResponse {
     string pattern_uuid = 3;
     string download_url = 4;    // URL to download pattern data from
     PatternInfo pattern = 6;    // Pattern metadata to add to manifest
+    // Purchase receipt (present if this is a purchased pattern)
+    bytes purchase_receipt_payload = 7;    // Signed PurchaseReceipt protobuf
+    bytes purchase_receipt_signature = 8;  // RSA signature over payload
 }
 
 message DownloadedPatternsRequest {}
@@ -132,6 +138,12 @@ message PatternInfo {
     uint32 start_point = 7;  // 0=center, 1=edge
     string created_at = 8;
     string last_played_at = 9;
+    string download_url = 10;  // e.g. /api/pattern_download/{uuid} (empty if encrypted)
+    string thumb_url = 11;     // e.g. /api/pattern_thumb/{uuid}
+    // Ownership fields (for purchased patterns)
+    bool is_owned = 12;            // True if purchased (permanent access)
+    int64 purchased_at = 13;       // Unix timestamp, 0 if not owned
+    string receipt_id = 14;        // Receipt ID for support, empty if not owned
 }
 
 message ModifyPattern {
@@ -157,6 +169,61 @@ message PatternDownloadProgress {
 // Not sent when no downloads are active
 message PatternDownloadProgressReport {
     repeated PatternDownloadProgress downloads = 1;
+}
+
+// =============================================================================
+// Local Pattern Upload Flow
+// =============================================================================
+//
+// When a user uploads a pattern via POST /api/patterns (multipart/form-data):
+//
+// 1. HTTP Response (immediate):
+//    - 200 OK with JSON: {"uuid": "...", "name": "...", "status": "processing"}
+//    - File saved as .tmp, conversion task spawned
+//
+// 2. WebSocket: PatternConversionProgressReport (periodic during conversion)
+//    - Sent as conversion progresses (0-100%)
+//    - stage: "converting" while processing, "complete" or "failed" at end
+//
+// 3. WebSocket: PatternThumbProgressReport (after conversion, during thumbnail generation)
+//    - Sent as thumbnail renders (0-100%)
+//    - stage: "rendering" while processing, "complete" or "failed" at end
+//
+// 4. Final state:
+//    - Pattern appears in GET /api/patterns with download_url and thumb_url populated
+//    - Client can poll or wait for stage="complete" on both reports
+//
+// Error handling:
+//    - If conversion fails: PatternConversionProgressReport with stage="failed", error set
+//    - If thumb fails: PatternThumbProgressReport with stage="failed", error set
+//    - Pattern may still be usable without thumbnail
+//
+// =============================================================================
+
+// Progress report for local pattern conversion (THR ASCII -> THRB binary)
+message PatternConversionProgress {
+    string uuid = 1;            // Pattern UUID being converted
+    string stage = 2;           // "converting", "complete", "failed"
+    uint32 progress_pct = 3;    // Conversion progress 0-100
+    string error = 4;           // Error message if stage="failed"
+}
+
+// Broadcast when conversion state changes
+message PatternConversionProgressReport {
+    repeated PatternConversionProgress conversions = 1;
+}
+
+// Progress report for pattern thumbnail generation
+message PatternThumbProgress {
+    string uuid = 1;            // Pattern UUID
+    string stage = 2;           // "rendering", "complete", "failed"
+    uint32 progress_pct = 3;    // Render progress 0-100
+    string error = 4;           // Error message if stage="failed"
+}
+
+// Broadcast when thumbnail generation state changes
+message PatternThumbProgressReport {
+    repeated PatternThumbProgress thumbnails = 1;
 }
 
 // =============================================================================
@@ -493,6 +560,31 @@ message LicensePayload {
     string license_id = 5;             // Unique ID for revocation
     int64 issued_at = 6;
     string store_token = 7;            // JWT token for store authentication (max 384 bytes)
+}
+
+// Purchase receipt for permanently owned patterns (signed by server)
+// Stored in /sd/patterns/{uuid}.licdat
+message PurchaseReceipt {
+    string pattern_uuid = 1;           // Pattern this receipt authorizes
+    string for_device = 2;             // Must match device certificate CN
+    int64 purchased_at = 3;            // Unix timestamp UTC
+    string receipt_id = 4;             // Unique receipt ID for support
+    string pattern_name = 5;           // Human-readable name (for diagnostics)
+}
+
+// Request to sync all purchases for this device
+message SyncPurchasesRequest {}
+
+// Response with all purchase receipts for this device
+message SyncPurchasesResponse {
+    repeated PurchaseReceiptBundle receipts = 1;
+}
+
+// A purchase receipt with its signature
+message PurchaseReceiptBundle {
+    string pattern_uuid = 1;
+    bytes payload = 2;                 // Serialized PurchaseReceipt
+    bytes signature = 3;               // RSA signature over payload
 }
 
 // Request to get the current store token

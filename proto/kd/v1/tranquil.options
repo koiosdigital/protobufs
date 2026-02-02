@@ -14,6 +14,8 @@ kd.v1.RequestPatternDownload.pattern_uuid max_size:40
 kd.v1.PatternDownloadResponse.error max_size:256
 kd.v1.PatternDownloadResponse.pattern_uuid max_size:40
 kd.v1.PatternDownloadResponse.download_url max_size:512
+kd.v1.PatternDownloadResponse.purchase_receipt_payload max_size:512
+kd.v1.PatternDownloadResponse.purchase_receipt_signature max_size:256
 
 kd.v1.DownloadedPatterns.patterns max_count:100
 
@@ -22,6 +24,7 @@ kd.v1.PatternInfo.name max_size:128
 kd.v1.PatternInfo.creator max_size:64
 kd.v1.PatternInfo.created_at max_size:32
 kd.v1.PatternInfo.last_played_at max_size:32
+kd.v1.PatternInfo.receipt_id max_size:64
 
 kd.v1.ModifyPattern.uuid max_size:40
 kd.v1.ModifyPattern.name max_size:128
@@ -113,3 +116,17 @@ kd.v1.LoadPresetResponse.error max_size:128
 # Homing messages
 # =============================================================================
 kd.v1.HomeResponse.error max_size:128
+
+# =============================================================================
+# DRM/Purchase messages
+# =============================================================================
+kd.v1.PurchaseReceipt.pattern_uuid max_size:40
+kd.v1.PurchaseReceipt.for_device max_size:128
+kd.v1.PurchaseReceipt.receipt_id max_size:64
+kd.v1.PurchaseReceipt.pattern_name max_size:128
+
+kd.v1.SyncPurchasesResponse.receipts max_count:100
+
+kd.v1.PurchaseReceiptBundle.pattern_uuid max_size:40
+kd.v1.PurchaseReceiptBundle.payload max_size:512
+kd.v1.PurchaseReceiptBundle.signature max_size:256
