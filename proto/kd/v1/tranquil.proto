@@ -96,6 +96,8 @@ message TranquilMessage {
         // DRM/License management
         LicenseRequest license_request = 111; //N/A - not used &&& sent to server on boot to fetch/refresh license
         LicenseResponse license_response = 112; //N/A - not used &&& from server with signed license payload
+        GetStoreTokenRequest get_store_token_request = 113; //from local client, responds with StoreTokenResponse &&& N/A - not used
+        StoreTokenResponse store_token_response = 114; //response to above &&& N/A - not used
     }
 }
 
@@ -107,13 +109,11 @@ message RequestPatternDownload {
     string pattern_uuid = 1;
 }
 
-// Response to RequestPatternDownload - contains auth token and URL for HTTP download
+// Response to RequestPatternDownload - contains URL for HTTP download
 message PatternDownloadResponse {
     string pattern_uuid = 3;
     string download_url = 4;    // URL to download pattern data from
-    string token = 5;           // Authorization token (use as Bearer token)
     PatternInfo pattern = 6;    // Pattern metadata to add to manifest
-    EncryptionMetadata encryption = 7;  // Present when pattern.encrypted=true
 }
 
 message DownloadedPatternsRequest {}
@@ -492,12 +492,15 @@ message LicensePayload {
     int64 valid_to = 4;                // Unix timestamp UTC
     string license_id = 5;             // Unique ID for revocation
     int64 issued_at = 6;
+    string store_token = 7;            // JWT token for store authentication (max 384 bytes)
 }
 
-// Encryption metadata for encrypted patterns
-message EncryptionMetadata {
-    bytes encrypted_key = 1;           // RSA-OAEP encrypted AES key (512 bytes)
-    bytes iv = 2;                      // AES-GCM IV (12 bytes)
-    uint64 original_size = 3;          // Original unencrypted size
-    bytes original_hash = 4;           // SHA-256 of plaintext
+// Request to get the current store token
+message GetStoreTokenRequest {}
+
+// Response with store token
+message StoreTokenResponse {
+    bool success = 1;
+    string store_token = 2;            // JWT token (empty if no valid license or token)
+    string error = 3;                  // Error message if not successful
 }

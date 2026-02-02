@@ -14,7 +14,6 @@ kd.v1.RequestPatternDownload.pattern_uuid max_size:40
 kd.v1.PatternDownloadResponse.error max_size:256
 kd.v1.PatternDownloadResponse.pattern_uuid max_size:40
 kd.v1.PatternDownloadResponse.download_url max_size:512
-kd.v1.PatternDownloadResponse.token max_size:512
 
 kd.v1.DownloadedPatterns.patterns max_count:100
 
