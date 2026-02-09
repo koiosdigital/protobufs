@@ -12,6 +12,7 @@ message MatrxMessage {
 
         AppRenderRequest app_render_request = 4;
         AppRenderResponse app_render_response = 5;
+        AppDataChunk app_data_chunk = 11;  // Chunked data transfer
 
         DeviceConfigRequest device_config_request = 6;
         DeviceConfig device_config = 7;
@@ -77,12 +78,20 @@ message Schedule {
 message AppRenderRequest {
     bytes app_uuid = 1;
     bytes data_sha256 = 2;
+    uint32 preferred_chunk_size = 3;  // Device's preferred chunk size (e.g., 8192)
 }
 
 message AppRenderResponse {
     bytes app_uuid = 1;
-    bytes app_data = 2;
-    bytes data_sha256 = 3;
+    bytes data_sha256 = 2;
+    uint32 total_size = 3;      // Total bytes to expect
+    uint32 total_chunks = 4;    // Number of AppDataChunk messages to follow
+}
+
+message AppDataChunk {
+    bytes app_uuid = 1;
+    uint32 chunk_index = 2;     // 0-based index
+    bytes data = 3;
 }
 
 message ScheduleItemSetPinState {
