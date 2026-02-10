@@ -84,8 +84,9 @@ message AppRenderRequest {
 message AppRenderResponse {
     bytes app_uuid = 1;
     bytes data_sha256 = 2;
-    uint32 total_size = 3;      // Total bytes to expect
-    uint32 total_chunks = 4;    // Number of AppDataChunk messages to follow
+    bool  displayable = 3;
+    uint32 total_size = 4;      // Total bytes to expect
+    uint32 total_chunks = 5;    // Number of AppDataChunk messages to follow
 }
 
 message AppDataChunk {
