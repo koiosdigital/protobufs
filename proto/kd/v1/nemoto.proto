@@ -1,0 +1,400 @@
+syntax = "proto3";
+
+import "kd/v1/common.proto";
+
+package kd.v1;
+
+// =============================================================================
+// Nemoto - Split-flap display host.
+//
+// Cloud protocol is intentionally a thin layer over the local API. The device
+// is fully usable offline on LAN; cloud sees:
+//   - aggregate fleet health (counts + faulted modules only)
+//   - user-curated content (presets, schedules, config) with bidirectional sync
+//   - high-level remote commands (show preset, clear, reboot)
+//   - lifecycle/auth/cert/OTA bookkeeping
+//
+// Cloud does NOT see: grid layout, per-cell state, per-module diagnostics,
+// calibration data, motion tuning, or any CAN-level detail. Those are
+// install-specific and only matter to the local web UI.
+//
+// Bidirectional sync uses a digest-then-diff pattern: device sends a hash of
+// its (id, updated_at) list on connect; cloud replies with only what differs.
+// Conflicts resolve by max(updated_at), ties to cloud.
+// =============================================================================
+
+message NemotoMessage {
+    oneof message {
+        // Lifecycle / liveness
+        Ping ping = 1;
+        Pong pong = 2;
+        NemotoSystemInfoRequest system_info_request = 3; //C->D
+        NemotoSystemInfo system_info = 4; //D->C response + on change
+
+        // Setup / onboarding (drives the mobile app wizard)
+        NemotoSetupStatus setup_status = 10; //D->C on transition
+
+        // Fleet health rollup — replaces per-module status streams
+        NemotoFleetSummary fleet_summary = 20; //D->C, ~60s + on error transition
+
+        // Activity stream — what the device did, for cloud timeline / push
+        NemotoActivityEvent activity_event = 30; //D->C
+
+        // Preset sync (bidirectional, digest-then-diff)
+        PresetSyncRequest preset_sync_request = 40; //bidirectional
+        PresetSyncDiff preset_sync_diff = 41; //response to sync_request
+        PresetUpsert preset_upsert = 42; //bidirectional
+        PresetDelete preset_delete = 43; //bidirectional
+
+        // Schedule sync (bidirectional, digest-then-diff)
+        ScheduleSyncRequest schedule_sync_request = 50; //bidirectional
+        ScheduleSyncDiff schedule_sync_diff = 51; //response to sync_request
+        ScheduleUpsert schedule_upsert = 52; //bidirectional
+        ScheduleDelete schedule_delete = 53; //bidirectional
+
+        // Display + quiet hours config (single-doc, last-writer-wins)
+        NemotoConfigRequest config_request = 60; //bidirectional
+        NemotoConfigUpsert config_upsert = 61; //bidirectional
+
+        // Remote display commands (C->D)
+        ShowPresetRequest show_preset_request = 70;
+        DisplayCellRequest display_cell_request = 71;
+        DisplayClearRequest display_clear_request = 72;
+        RunScheduleNowRequest run_schedule_now_request = 73;
+        RebootRequest reboot_request = 74;
+
+        // OTA coordination
+        OtaAvailable ota_available = 80; //C->D
+        OtaProgress ota_progress = 81; //D->C
+
+        // Common (from common.proto)
+        CommandResult command_result = 100;
+        UploadCoreDump upload_core_dump = 101; //D->C on crash recovery
+        JoinResponse join_response = 104; //C->D on connect
+        ClaimDevice claim_device = 105; //D->C if unclaimed and token in NVS
+        FactoryResetRequest factory_reset_request = 106; //C->D
+
+        // Certificate management (same flow as tranquil)
+        CertReport cert_report = 107; //D->C on connect
+        CertRenewRequired cert_renew_required = 108; //C->D
+        CertRenewRequest cert_renew_request = 109; //D->C with CSR
+        CertRenewResponse cert_renew_response = 110; //C->D with new cert
+    }
+}
+
+// =============================================================================
+// Device identity & setup state
+// =============================================================================
+
+message NemotoSystemInfoRequest {}
+
+message NemotoSystemInfo {
+    string firmware_version = 1;
+    string hw_variant = 2;             // e.g. "nemoto-rev-c"
+    string device_name = 3;            // user-set friendly name
+    string mac = 4;
+    string ip = 5;
+    string hostname = 6;
+    string wifi_ssid = 7;
+    int32 wifi_rssi = 8;
+    uint32 uptime_s = 9;
+    uint32 free_heap = 10;
+    bool time_synced = 11;
+    string timezone = 12;
+}
+
+// Onboarding phase — drives the mobile app's setup wizard.
+// Linear progression in normal use; can regress (e.g. NEEDS_DISCOVERY after a
+// factory reset of a module).
+enum NemotoSetupPhase {
+    NEMOTO_SETUP_PHASE_UNSPECIFIED = 0;
+    NEMOTO_SETUP_PHASE_UNCLAIMED = 1;          // not yet linked to a user
+    NEMOTO_SETUP_PHASE_NO_MODULES = 2;         // claimed, but no CAN devices found
+    NEMOTO_SETUP_PHASE_NEEDS_DISCOVERY = 3;    // unassigned modules present
+    NEMOTO_SETUP_PHASE_NEEDS_GRID_MAPPING = 4; // assigned, not all mapped to (x,y)
+    NEMOTO_SETUP_PHASE_NEEDS_HOMING = 5;       // mapped, not all homed
+    NEMOTO_SETUP_PHASE_READY = 6;              // fully operational
+}
+
+message NemotoSetupStatus {
+    NemotoSetupPhase phase = 1;
+    uint32 module_count = 2;       // total known modules
+    uint32 assigned_count = 3;     // have short_id
+    uint32 mapped_count = 4;       // placed on grid
+    uint32 homed_count = 5;
+    uint32 grid_width = 6;
+    uint32 grid_height = 7;
+}
+
+// =============================================================================
+// Fleet health rollup
+// =============================================================================
+//
+// Sent on a slow cadence (~60s) and immediately when a module enters or leaves
+// an error state. Cloud uses this to drive fault dashboards and push notifs.
+//
+// `faults` carries ONLY modules with a problem — a healthy 132-module fleet
+// produces an empty faults array. The full module list is not transmitted.
+// =============================================================================
+
+enum NemotoFaultKind {
+    NEMOTO_FAULT_KIND_UNSPECIFIED = 0;
+    NEMOTO_FAULT_KIND_STALL_ERROR = 1;    // CAN_STEPPER_STATE_ERROR
+    NEMOTO_FAULT_KIND_OFFLINE = 2;        // missed heartbeats
+    NEMOTO_FAULT_KIND_NOT_HOMED = 3;      // never completed homing
+    NEMOTO_FAULT_KIND_UNMAPPED = 4;       // assigned but no grid position
+    NEMOTO_FAULT_KIND_OVER_TEMP = 5;
+    NEMOTO_FAULT_KIND_UNASSIGNED = 6;     // seen on bus but no short_id
+}
+
+message NemotoModuleFault {
+    bytes uuid = 1;                // 6 bytes
+    uint32 short_id = 2;           // 0 if unassigned
+    NemotoFaultKind kind = 3;
+    int32 temp_c = 4;
+    uint32 last_seen_s_ago = 5;
+    string detail = 6;             // optional human-readable
+}
+
+message NemotoFleetSummary {
+    uint32 total = 1;
+    uint32 assigned = 2;
+    uint32 alive = 3;
+    uint32 homed = 4;
+    uint32 in_error = 5;
+    uint32 grid_width = 6;
+    uint32 grid_height = 7;
+    uint32 grid_mapped = 8;
+    repeated NemotoModuleFault faults = 9;
+    int64 generated_at = 10;       // unix seconds
+}
+
+// =============================================================================
+// Activity stream — high-level events for the cloud timeline.
+// =============================================================================
+
+message NemotoActivityEvent {
+    int64 ts = 1;
+    oneof event {
+        SchedulePresetShown schedule_preset_shown = 2;
+        PresetShownManual preset_shown_manual = 3;
+        DiscoveryComplete discovery_complete = 4;
+        BootloaderEntered bootloader_entered = 5;
+        EmergencyStopFired emergency_stop_fired = 6;
+        QuietHoursBlocked quiet_hours_blocked = 7;
+    }
+}
+
+message SchedulePresetShown {
+    uint32 schedule_id = 1;
+    string schedule_name = 2;
+    uint32 preset_id = 3;
+    string preset_name = 4;
+}
+
+message PresetShownManual {
+    uint32 preset_id = 1;
+    string preset_name = 2;
+    string source = 3;             // "local_ui", "cloud", "console"
+}
+
+message DiscoveryComplete {
+    uint32 found = 1;
+    uint32 assigned = 2;
+    bool reset_assignments = 3;
+}
+
+message BootloaderEntered {
+    uint32 module_count = 1;
+    string target_fw_version = 2;
+}
+
+message EmergencyStopFired {
+    string source = 1;             // "local_ui", "cloud", "console"
+}
+
+message QuietHoursBlocked {
+    string action = 1;             // what was attempted
+    string source = 2;
+}
+
+// =============================================================================
+// Preset sync (bidirectional)
+//
+// On connect: device sends PresetSyncRequest with its local digest. Cloud
+// replies with PresetSyncDiff containing only what's out of date. Subsequent
+// edits on either side push PresetUpsert / PresetDelete unsolicited.
+//
+// Flaps are a packed byte array (W*H bytes, row-major, each 0-63) matching
+// the local NVS blob layout. Smaller than nested arrays and 1:1 with storage.
+// =============================================================================
+
+message PresetSyncRequest {
+    bytes local_digest = 1;        // SHA-256 over sorted (id, updated_at)
+    uint32 local_count = 2;
+}
+
+message PresetSyncDiff {
+    repeated PresetUpsert upserts = 1;
+    repeated uint32 deleted_ids = 2;
+}
+
+message PresetUpsert {
+    uint32 id = 1;
+    string name = 2;
+    uint32 width = 3;
+    uint32 height = 4;
+    bytes flaps = 5;               // width * height bytes, row-major
+    int64 updated_at = 6;          // unix seconds
+}
+
+message PresetDelete {
+    uint32 id = 1;
+    int64 tombstone_at = 2;
+}
+
+// =============================================================================
+// Schedule sync (bidirectional)
+// =============================================================================
+
+enum NemotoScheduleActionType {
+    NEMOTO_SCHEDULE_ACTION_TYPE_UNSPECIFIED = 0;
+    NEMOTO_SCHEDULE_ACTION_TYPE_DISPLAY_PRESET = 1;
+    NEMOTO_SCHEDULE_ACTION_TYPE_DISPLAY_SOLID = 2;
+    NEMOTO_SCHEDULE_ACTION_TYPE_CLEAR = 3;
+}
+
+message NemotoScheduleAction {
+    NemotoScheduleActionType type = 1;
+    uint32 preset_id = 2;          // DISPLAY_PRESET
+    uint32 flap = 3;               // DISPLAY_SOLID (0-63)
+}
+
+message ScheduleSyncRequest {
+    bytes local_digest = 1;
+    uint32 local_count = 2;
+}
+
+message ScheduleSyncDiff {
+    repeated ScheduleUpsert upserts = 1;
+    repeated uint32 deleted_ids = 2;
+}
+
+message ScheduleUpsert {
+    uint32 id = 1;
+    string name = 2;
+    string cron = 3;
+    bool enabled = 4;
+    bool obey_quiet_hours = 5;
+    NemotoScheduleAction action = 6;
+    int64 updated_at = 7;
+}
+
+message ScheduleDelete {
+    uint32 id = 1;
+    int64 tombstone_at = 2;
+}
+
+// =============================================================================
+// Display + quiet-hours config (single-document, last-writer-wins)
+// =============================================================================
+
+message NemotoQuietWindow {
+    uint32 day_mask = 1;           // bit0 = Sunday..bit6 = Saturday
+    uint32 start_hour = 2;         // 0-23
+    uint32 start_min = 3;          // 0-59
+    uint32 end_hour = 4;
+    uint32 end_min = 5;
+    bool enabled = 6;
+}
+
+enum NemotoCycleType {
+    NEMOTO_CYCLE_TYPE_UNSPECIFIED = 0;
+    NEMOTO_CYCLE_TYPE_PARTIAL = 1;
+    NEMOTO_CYCLE_TYPE_FULL = 2;
+}
+
+message NemotoConfigRequest {}
+
+message NemotoConfigUpsert {
+    string device_name = 1;
+    uint32 boot_preset_id = 2;
+    uint32 default_speed = 3;      // flaps/sec, 0 = no override
+    uint32 default_accel = 4;      // steps/s^2
+    uint32 auto_discover_sec = 5;
+
+    string display_effect_id = 10;
+    uint32 display_delay_ms = 11;
+    NemotoCycleType cycle_type = 12;
+
+    repeated NemotoQuietWindow quiet_windows = 20;
+
+    int64 updated_at = 30;
+}
+
+// =============================================================================
+// Remote display commands (C->D)
+//
+// Cloud cannot drive the CAN bus directly. The high-level set below is all
+// it can do. Anything finer (per-module, calibration, motion tuning) is
+// LAN-only — service operations don't belong on the public internet.
+// =============================================================================
+
+message ShowPresetRequest {
+    uint32 preset_id = 1;
+    bool force_quiet = 2;          // bypass quiet hours
+}
+
+message DisplayCellRequest {
+    uint32 x = 1;
+    uint32 y = 2;
+    uint32 flap = 3;               // 0-63
+    bool force_quiet = 4;
+}
+
+message DisplayClearRequest {
+    bool force_quiet = 1;
+}
+
+message RunScheduleNowRequest {
+    uint32 schedule_id = 1;
+    bool force_quiet = 2;
+}
+
+message RebootRequest {}
+
+// =============================================================================
+// OTA coordination
+//
+// Host firmware OTA only. Module (sakura_boot) OTA is orchestrated locally by
+// the host; cloud sees the fleet-wide phase via OtaProgress but does not push
+// per-module flash data.
+// =============================================================================
+
+enum NemotoOtaPhase {
+    NEMOTO_OTA_PHASE_UNSPECIFIED = 0;
+    NEMOTO_OTA_PHASE_CHECKING = 1;
+    NEMOTO_OTA_PHASE_DOWNLOADING_HOST = 2;
+    NEMOTO_OTA_PHASE_FLASHING_MODULES = 3;
+    NEMOTO_OTA_PHASE_REBOOTING = 4;
+    NEMOTO_OTA_PHASE_DONE = 5;
+    NEMOTO_OTA_PHASE_FAILED = 6;
+}
+
+message OtaAvailable {
+    string fw_version = 1;
+    string url = 2;
+    bytes sha256 = 3;
+    bool force = 4;                // ignore quiet hours / active schedules
+    string release_notes = 5;
+}
+
+message OtaProgress {
+    NemotoOtaPhase phase = 1;
+    uint32 percent = 2;            // 0-100 within current phase
+    bytes current_module_uuid = 3; // 6 bytes, set during FLASHING_MODULES
+    uint32 modules_done = 4;
+    uint32 modules_total = 5;
+    string error_detail = 6;       // set on FAILED
+    string fw_version = 7;
+}

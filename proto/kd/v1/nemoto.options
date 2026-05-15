@@ -1,0 +1,86 @@
+# =============================================================================
+# Nemoto Split-Flap Host - nanopb options
+#
+# Sizing targets the 150-module / 32-preset / 16-schedule deployment ceiling.
+# Preset flap blobs sized for the largest grid we support (32x16 = 512 bytes).
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Device identity
+# -----------------------------------------------------------------------------
+kd.v1.NemotoSystemInfo.firmware_version max_size:32
+kd.v1.NemotoSystemInfo.hw_variant max_size:32
+kd.v1.NemotoSystemInfo.device_name max_size:32
+kd.v1.NemotoSystemInfo.mac max_size:18
+kd.v1.NemotoSystemInfo.ip max_size:16
+kd.v1.NemotoSystemInfo.hostname max_size:64
+kd.v1.NemotoSystemInfo.wifi_ssid max_size:33
+kd.v1.NemotoSystemInfo.timezone max_size:48
+
+# -----------------------------------------------------------------------------
+# Fleet summary
+# -----------------------------------------------------------------------------
+kd.v1.NemotoModuleFault.uuid max_size:6
+kd.v1.NemotoModuleFault.detail max_size:64
+
+kd.v1.NemotoFleetSummary.faults max_count:150
+
+# -----------------------------------------------------------------------------
+# Activity events
+# -----------------------------------------------------------------------------
+kd.v1.SchedulePresetShown.schedule_name max_size:32
+kd.v1.SchedulePresetShown.preset_name max_size:32
+
+kd.v1.PresetShownManual.preset_name max_size:32
+kd.v1.PresetShownManual.source max_size:16
+
+kd.v1.BootloaderEntered.target_fw_version max_size:32
+
+kd.v1.EmergencyStopFired.source max_size:16
+
+kd.v1.QuietHoursBlocked.action max_size:32
+kd.v1.QuietHoursBlocked.source max_size:16
+
+# -----------------------------------------------------------------------------
+# Preset sync
+# -----------------------------------------------------------------------------
+kd.v1.PresetSyncRequest.local_digest max_size:32  # SHA-256
+kd.v1.PresetSyncDiff.upserts max_count:32
+kd.v1.PresetSyncDiff.deleted_ids max_count:32
+
+kd.v1.PresetUpsert.name max_size:32
+kd.v1.PresetUpsert.flaps max_size:512             # 32 * 16 grid ceiling
+
+# -----------------------------------------------------------------------------
+# Schedule sync
+# -----------------------------------------------------------------------------
+kd.v1.ScheduleSyncRequest.local_digest max_size:32
+kd.v1.ScheduleSyncDiff.upserts max_count:16
+kd.v1.ScheduleSyncDiff.deleted_ids max_count:16
+
+kd.v1.ScheduleUpsert.name max_size:32
+kd.v1.ScheduleUpsert.cron max_size:64
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+kd.v1.NemotoConfigUpsert.device_name max_size:32
+kd.v1.NemotoConfigUpsert.display_effect_id max_size:32
+kd.v1.NemotoConfigUpsert.quiet_windows max_count:8
+
+# -----------------------------------------------------------------------------
+# OTA
+# -----------------------------------------------------------------------------
+kd.v1.OtaAvailable.fw_version max_size:32
+kd.v1.OtaAvailable.url max_size:256
+kd.v1.OtaAvailable.sha256 max_size:32
+kd.v1.OtaAvailable.release_notes max_size:512
+
+kd.v1.OtaProgress.current_module_uuid max_size:6
+kd.v1.OtaProgress.error_detail max_size:128
+kd.v1.OtaProgress.fw_version max_size:32
+
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
+# (NemotoSetupStatus is all scalar)

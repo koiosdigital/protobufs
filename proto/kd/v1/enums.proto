@@ -8,6 +8,7 @@ enum DeviceType {
   DEVICE_TYPE_KEYLOQ = 2; // Keyloq Device
   DEVICE_TYPE_LANTERN = 3; // Lantern Device
   DEVICE_TYPE_TRANQUIL = 4; // Tranquil Device
+  DEVICE_TYPE_NEMOTO = 5; // Nemoto Device (split-flap host)
 }
 
 enum UserClaimStatusCode {
