@@ -54,7 +54,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     )
 
     if(NOT BUF_GEN_RESULT EQUAL 0)
-        message(WARN
+        message(FATAL_ERROR
             "buf generate failed with exit code ${BUF_GEN_RESULT}.\n"
             "stdout:\n${BUF_GEN_STDOUT}\n"
             "stderr:\n${BUF_GEN_STDERR}\n"

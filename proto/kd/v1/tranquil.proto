@@ -389,14 +389,6 @@ message SystemInfo {
     string hostname = 6;
 }
 
-message Ping {
-    uint64 timestamp = 1;
-}
-
-message Pong {
-    uint64 timestamp = 1;
-}
-
 // =============================================================================
 // Scheduling Messages
 // =============================================================================

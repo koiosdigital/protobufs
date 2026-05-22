@@ -10,6 +10,14 @@ message CommandResult {
     string detail = 3; // Optional human-readable detail
 }
 
+message Ping {
+    uint64 timestamp = 1;
+}
+
+message Pong {
+    uint64 timestamp = 1;
+}
+
 message JoinResponse {
     bool success = 1;
     bool is_claimed = 2;
