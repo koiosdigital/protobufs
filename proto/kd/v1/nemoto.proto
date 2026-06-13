@@ -63,10 +63,6 @@ message NemotoMessage {
         RunScheduleNowRequest run_schedule_now_request = 73;
         RebootRequest reboot_request = 74;
 
-        // OTA coordination
-        OtaAvailable ota_available = 80; //C->D
-        OtaProgress ota_progress = 81; //D->C
-
         // Common (from common.proto)
         CommandResult command_result = 100;
         UploadCoreDump upload_core_dump = 101; //D->C on crash recovery
@@ -362,39 +358,3 @@ message RunScheduleNowRequest {
 }
 
 message RebootRequest {}
-
-// =============================================================================
-// OTA coordination
-//
-// Host firmware OTA only. Module (sakura_boot) OTA is orchestrated locally by
-// the host; cloud sees the fleet-wide phase via OtaProgress but does not push
-// per-module flash data.
-// =============================================================================
-
-enum NemotoOtaPhase {
-    NEMOTO_OTA_PHASE_UNSPECIFIED = 0;
-    NEMOTO_OTA_PHASE_CHECKING = 1;
-    NEMOTO_OTA_PHASE_DOWNLOADING_HOST = 2;
-    NEMOTO_OTA_PHASE_FLASHING_MODULES = 3;
-    NEMOTO_OTA_PHASE_REBOOTING = 4;
-    NEMOTO_OTA_PHASE_DONE = 5;
-    NEMOTO_OTA_PHASE_FAILED = 6;
-}
-
-message OtaAvailable {
-    string fw_version = 1;
-    string url = 2;
-    bytes sha256 = 3;
-    bool force = 4;                // ignore quiet hours / active schedules
-    string release_notes = 5;
-}
-
-message OtaProgress {
-    NemotoOtaPhase phase = 1;
-    uint32 percent = 2;            // 0-100 within current phase
-    bytes current_module_uuid = 3; // 6 bytes, set during FLASHING_MODULES
-    uint32 modules_done = 4;
-    uint32 modules_total = 5;
-    string error_detail = 6;       // set on FAILED
-    string fw_version = 7;
-}
