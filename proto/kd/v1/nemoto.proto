@@ -9,14 +9,15 @@ package kd.v1;
 //
 // Cloud protocol is intentionally a thin layer over the local API. The device
 // is fully usable offline on LAN; cloud sees:
-//   - aggregate fleet health (counts + faulted modules only)
+//   - system-level state (setup phase, currently displayed frame)
 //   - user-curated content (presets, schedules, config) with bidirectional sync
-//   - high-level remote commands (show preset, clear, reboot)
+//   - high-level remote commands (show preset, push frame, clear, reboot)
 //   - lifecycle/auth/cert/OTA bookkeeping
 //
-// Cloud does NOT see: grid layout, per-cell state, per-module diagnostics,
-// calibration data, motion tuning, or any CAN-level detail. Those are
-// install-specific and only matter to the local web UI.
+// Cloud does NOT see: grid layout, per-cell state, per-module status or
+// diagnostics, calibration data, motion tuning, or any CAN-level detail.
+// Those are install-specific and only matter to the local web UI. The cloud
+// manages the system as a whole, never individual modules.
 //
 // Bidirectional sync uses a digest-then-diff pattern: device sends a hash of
 // its (id, updated_at) list on connect; cloud replies with only what differs.
@@ -34,8 +35,9 @@ message NemotoMessage {
         // Setup / onboarding (drives the mobile app wizard)
         NemotoSetupStatus setup_status = 10; //D->C on transition
 
-        // Fleet health rollup — replaces per-module status streams
-        NemotoFleetSummary fleet_summary = 20; //D->C, ~60s + on error transition
+        // Currently displayed frame
+        NemotoDisplayState display_state = 21; //D->C on change, ~60s, + response
+        NemotoDisplayStateRequest display_state_request = 22; //C->D pull
 
         // Activity stream — what the device did, for cloud timeline / push
         NemotoActivityEvent activity_event = 30; //D->C
@@ -62,6 +64,11 @@ message NemotoMessage {
         DisplayClearRequest display_clear_request = 72;
         RunScheduleNowRequest run_schedule_now_request = 73;
         RebootRequest reboot_request = 74;
+        DisplayFrameRequest display_frame_request = 75;
+
+        // OTA coordination
+        OtaAvailable ota_available = 80; //C->D
+        OtaProgress ota_progress = 81; //D->C
 
         // Common (from common.proto)
         CommandResult command_result = 100;
@@ -76,6 +83,10 @@ message NemotoMessage {
         CertRenewRequest cert_renew_request = 109; //D->C with CSR
         CertRenewResponse cert_renew_response = 110; //C->D with new cert
     }
+
+    // 20 was NemotoFleetSummary fleet_summary — per-module fault reporting
+    // was removed as too granular for the cloud.
+    reserved 20;
 }
 
 // =============================================================================
@@ -123,46 +134,25 @@ message NemotoSetupStatus {
 }
 
 // =============================================================================
-// Fleet health rollup
+// Currently displayed frame
 // =============================================================================
 //
-// Sent on a slow cadence (~60s) and immediately when a module enters or leaves
-// an error state. Cloud uses this to drive fault dashboards and push notifs.
-//
-// `faults` carries ONLY modules with a problem — a healthy 132-module fleet
-// produces an empty faults array. The full module list is not transmitted.
+// Mirrors the device's LastFrame: sent on every frame change (debounced), on
+// a slow keepalive cadence (~60s, also re-arms the server's live-state TTL),
+// on connect, and in response to NemotoDisplayStateRequest.
 // =============================================================================
 
-enum NemotoFaultKind {
-    NEMOTO_FAULT_KIND_UNSPECIFIED = 0;
-    NEMOTO_FAULT_KIND_STALL_ERROR = 1;    // CAN_STEPPER_STATE_ERROR
-    NEMOTO_FAULT_KIND_OFFLINE = 2;        // missed heartbeats
-    NEMOTO_FAULT_KIND_NOT_HOMED = 3;      // never completed homing
-    NEMOTO_FAULT_KIND_UNMAPPED = 4;       // assigned but no grid position
-    NEMOTO_FAULT_KIND_OVER_TEMP = 5;
-    NEMOTO_FAULT_KIND_UNASSIGNED = 6;     // seen on bus but no short_id
-}
+message NemotoDisplayStateRequest {}
 
-message NemotoModuleFault {
-    bytes uuid = 1;                // 6 bytes
-    uint32 short_id = 2;           // 0 if unassigned
-    NemotoFaultKind kind = 3;
-    int32 temp_c = 4;
-    uint32 last_seen_s_ago = 5;
-    string detail = 6;             // optional human-readable
-}
-
-message NemotoFleetSummary {
-    uint32 total = 1;
-    uint32 assigned = 2;
-    uint32 alive = 3;
-    uint32 homed = 4;
-    uint32 in_error = 5;
-    uint32 grid_width = 6;
-    uint32 grid_height = 7;
-    uint32 grid_mapped = 8;
-    repeated NemotoModuleFault faults = 9;
-    int64 generated_at = 10;       // unix seconds
+message NemotoDisplayState {
+    bool valid = 1;                // false until the first frame is shown
+    uint32 width = 2;
+    uint32 height = 3;
+    bytes flaps = 4;               // width * height bytes, row-major, 0-63
+    string effect_id = 5;
+    uint32 delay_ms = 6;
+    NemotoCycleType cycle_type = 7;
+    int64 shown_at = 8;            // unix seconds (approximate)
 }
 
 // =============================================================================
@@ -358,3 +348,52 @@ message RunScheduleNowRequest {
 }
 
 message RebootRequest {}
+
+// Push a full custom frame (e.g. a message composed in the app). Dimensions
+// must match the device's current grid. Empty effect_id / zero delay_ms mean
+// "use the device's default"; text-to-flap layout is the sender's job — the
+// device only understands flap indices.
+message DisplayFrameRequest {
+    uint32 width = 1;
+    uint32 height = 2;
+    bytes flaps = 3;               // width * height bytes, row-major, 0-63
+    string effect_id = 4;
+    uint32 delay_ms = 5;
+    bool force_quiet = 6;
+}
+
+// =============================================================================
+// OTA coordination
+//
+// Host firmware OTA only. Module (sakura_boot) OTA is orchestrated locally by
+// the host; cloud sees the fleet-wide phase via OtaProgress but does not push
+// per-module flash data.
+// =============================================================================
+
+enum NemotoOtaPhase {
+    NEMOTO_OTA_PHASE_UNSPECIFIED = 0;
+    NEMOTO_OTA_PHASE_CHECKING = 1;
+    NEMOTO_OTA_PHASE_DOWNLOADING_HOST = 2;
+    NEMOTO_OTA_PHASE_FLASHING_MODULES = 3;
+    NEMOTO_OTA_PHASE_REBOOTING = 4;
+    NEMOTO_OTA_PHASE_DONE = 5;
+    NEMOTO_OTA_PHASE_FAILED = 6;
+}
+
+message OtaAvailable {
+    string fw_version = 1;
+    string url = 2;
+    bytes sha256 = 3;
+    bool force = 4;                // ignore quiet hours / active schedules
+    string release_notes = 5;
+}
+
+message OtaProgress {
+    NemotoOtaPhase phase = 1;
+    uint32 percent = 2;            // 0-100 within current phase
+    bytes current_module_uuid = 3; // 6 bytes, set during FLASHING_MODULES
+    uint32 modules_done = 4;
+    uint32 modules_total = 5;
+    string error_detail = 6;       // set on FAILED
+    string fw_version = 7;
+}

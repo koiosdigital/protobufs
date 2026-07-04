@@ -18,12 +18,13 @@ kd.v1.NemotoSystemInfo.wifi_ssid max_size:33
 kd.v1.NemotoSystemInfo.timezone max_size:48
 
 # -----------------------------------------------------------------------------
-# Fleet summary
+# Display state / frame push
 # -----------------------------------------------------------------------------
-kd.v1.NemotoModuleFault.uuid max_size:6
-kd.v1.NemotoModuleFault.detail max_size:64
+kd.v1.NemotoDisplayState.flaps max_size:512       # 32 * 16 grid ceiling
+kd.v1.NemotoDisplayState.effect_id max_size:32
 
-kd.v1.NemotoFleetSummary.faults max_count:150
+kd.v1.DisplayFrameRequest.flaps max_size:512
+kd.v1.DisplayFrameRequest.effect_id max_size:32
 
 # -----------------------------------------------------------------------------
 # Activity events
