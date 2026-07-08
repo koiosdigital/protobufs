@@ -5,14 +5,18 @@ import "kd/v1/common.proto";
 package kd.v1;
 
 message MatrxMessage {
+    // Retired fields (do not reuse):
+    //  4/5/11 — AppRenderRequest/AppRenderResponse/AppDataChunk: chunked
+    //           render-over-socket, replaced by HTTPS pulls from the kd-api
+    //           DEVICE plane (GET /d/v1/installations/:id/render.webp).
+    //  107-110 — Cert* messages: device PKI is owned by the Koios SaaS now,
+    //            renewal never rides the message channel.
+    reserved 4, 5, 11, 107, 108, 109, 110;
+
     oneof message {
         ScheduleRequest schedule_request = 1;
         Schedule schedule = 2;
         ScheduleItemSetPinState schedule_item_set_pin_state = 3;
-
-        AppRenderRequest app_render_request = 4;
-        AppRenderResponse app_render_response = 5;
-        AppDataChunk app_data_chunk = 11;  // Chunked data transfer
 
         DeviceConfigRequest device_config_request = 6;
         DeviceConfig device_config = 7;
@@ -32,12 +36,6 @@ message MatrxMessage {
 
         // Sent from server to trigger factory reset
         FactoryResetRequest factory_reset_request = 106; //from server
-
-        // Certificate management
-        CertReport cert_report = 107; //to server - device reports current cert
-        CertRenewRequired cert_renew_required = 108; //from server - server requests renewal
-        CertRenewRequest cert_renew_request = 109; //to server - device sends CSR
-        CertRenewResponse cert_renew_response = 110; //from server - server sends new cert
     }
 }
 
@@ -72,27 +70,6 @@ message ScheduleItem {
 
 message Schedule {
     repeated ScheduleItem schedule_items = 1;
-}
-
-//MARK: Render
-message AppRenderRequest {
-    bytes app_uuid = 1;
-    bytes data_sha256 = 2;
-    uint32 preferred_chunk_size = 3;  // Device's preferred chunk size (e.g., 8192)
-}
-
-message AppRenderResponse {
-    bytes app_uuid = 1;
-    bytes data_sha256 = 2;
-    bool  displayable = 3;
-    uint32 total_size = 4;      // Total bytes to expect
-    uint32 total_chunks = 5;    // Number of AppDataChunk messages to follow
-}
-
-message AppDataChunk {
-    bytes app_uuid = 1;
-    uint32 chunk_index = 2;     // 0-based index
-    bytes data = 3;
 }
 
 message ScheduleItemSetPinState {
