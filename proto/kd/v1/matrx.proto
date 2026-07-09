@@ -50,11 +50,30 @@ message DeviceConfigRequest {
 
 }
 
+// A single quiet-hours window. Times are local wall-clock (device timezone).
+// A window where end < start wraps past midnight.
+message MatrxQuietWindow {
+    uint32 day_mask = 1;    // bitmask, bit0 = Sunday .. bit6 = Saturday
+    uint32 start_hour = 2;  // 0-23
+    uint32 start_min = 3;   // 0-59
+    uint32 end_hour = 4;    // 0-23
+    uint32 end_min = 5;     // 0-59
+    bool enabled = 6;
+}
+
 message DeviceConfig {
     bool screen_enabled = 1;
     uint32 screen_brightness = 2;
     bool auto_brightness_enabled = 3;
     uint32 screen_off_lux = 4;
+
+    // Quiet hours: while inside an enabled window the screen is turned off and
+    // the render pipeline is paused. Up to 7 windows are honored by the device.
+    repeated MatrxQuietWindow quiet_windows = 5;
+
+    // Device-reported only: true when currently inside a quiet-hours window.
+    // Ignored on messages sent to the device.
+    bool is_quiet_now = 6;
 }
 
 message ScheduleRequest {
