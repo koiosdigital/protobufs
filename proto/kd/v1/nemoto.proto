@@ -228,10 +228,14 @@ message PresetSyncDiff {
 message PresetUpsert {
     uint32 id = 1;
     string name = 2;
-    uint32 width = 3;
-    uint32 height = 4;
-    bytes flaps = 5;               // width * height bytes, row-major
+    uint32 width = 3;              // 0 for a url preset
+    uint32 height = 4;            // 0 for a url preset
+    bytes flaps = 5;               // width * height bytes, row-major (empty for url)
     int64 updated_at = 6;          // unix seconds
+    // A "url" preset renders its frame by fetching this URL on demand instead
+    // of storing a fixed flap array. When set (non-empty), width/height/flaps
+    // are empty and the device treats this as a url preset.
+    string url = 7;
 }
 
 message PresetDelete {
