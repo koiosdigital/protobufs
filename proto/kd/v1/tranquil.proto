@@ -421,19 +421,24 @@ message TranquilSchedule {
 // Motion/LED Configuration Messages
 // =============================================================================
 
-// Motion configuration - runtime adjustable parameters
+// Motion configuration - runtime adjustable parameters.
+// Removed fields are reserved so their numbers/names are never reused:
+//   3 theta_gear_ratio_x100 - coupling now derives from homing calibration
+//   4 pinion_diameter_mm     - rho scale comes from calibrated rho_max_steps
+//   10 default_accel_mm_s2   - ramp shape set by compile-time step accel
+//   11 max_accel_mm_s2       - unused
 message MotionConfigProto {
+    reserved 3, 4, 10, 11;
+    reserved "theta_gear_ratio_x100", "pinion_diameter_mm",
+             "default_accel_mm_s2", "max_accel_mm_s2";
+
     uint32 steps_per_rev = 1;
     uint32 microsteps = 2;
-    int32 theta_gear_ratio_x100 = 3;
-    int32 pinion_diameter_mm = 4;
     int32 theta_max_rpm = 5;
     int32 rho_max_rpm = 6;
     uint32 theta_current_ma = 7;
     uint32 rho_current_ma = 8;
     uint32 stallguard_threshold = 9;
-    float default_accel_mm_s2 = 10;
-    float max_accel_mm_s2 = 11;
 }
 
 // LED configuration
