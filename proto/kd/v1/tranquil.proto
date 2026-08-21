@@ -26,6 +26,9 @@ message TranquilMessage {
 
         // Pattern download progress (websocket broadcast)
         PatternDownloadProgressReport pattern_download_progress = 56; //broadcast to local clients when downloads active, every 5% per job &&& sent to cloud to report download progress
+        // Local upload pipeline progress (websocket broadcast)
+        PatternConversionProgressReport pattern_conversion_progress = 57; //broadcast to local clients during .thr->binary conversion &&& sent to cloud to report conversion progress
+        PatternThumbProgressReport pattern_thumb_progress = 58; //broadcast to local clients during thumbnail render &&& sent to cloud to report thumbnail progress
 
         // Playlist management
         PlaylistsRequest playlists_request = 8; //from local client, playlists response &&& bidirectional, responds with Playlists, we can use this to sync our playlists with server.
@@ -163,6 +166,11 @@ message GetPatternRequest {
 message PatternDownloadProgress {
     string uuid = 1;            // Pattern UUID being downloaded
     uint32 progress_pct = 2;    // Download progress 0-100
+    // Terminal failure signal. When true the download/convert/thumbnail
+    // pipeline gave up on this uuid; the entry is sent once with failed=true
+    // and then dropped. Clients should surface `error` and stop tracking it.
+    bool failed = 3;
+    string error = 4;           // Human-readable failure reason (set when failed=true)
 }
 
 // Broadcast report of all active pattern downloads (sent every 5% change per job)
@@ -425,16 +433,16 @@ message TranquilSchedule {
 // Removed fields are reserved so their numbers/names are never reused:
 //   3 theta_gear_ratio_x100 - coupling now derives from homing calibration
 //   4 pinion_diameter_mm     - rho scale comes from calibrated rho_max_steps
+//   5 theta_max_rpm          - theta spin bounded by compile-time THETA_MAX_ROT_PER_MIN
 //   10 default_accel_mm_s2   - ramp shape set by compile-time step accel
 //   11 max_accel_mm_s2       - unused
 message MotionConfigProto {
-    reserved 3, 4, 10, 11;
-    reserved "theta_gear_ratio_x100", "pinion_diameter_mm",
+    reserved 3, 4, 5, 10, 11;
+    reserved "theta_gear_ratio_x100", "pinion_diameter_mm", "theta_max_rpm",
              "default_accel_mm_s2", "max_accel_mm_s2";
 
     uint32 steps_per_rev = 1;
     uint32 microsteps = 2;
-    int32 theta_max_rpm = 5;
     int32 rho_max_rpm = 6;
     uint32 theta_current_ma = 7;
     uint32 rho_current_ma = 8;
