@@ -348,18 +348,29 @@ message PlayerState {
 
 message LEDConfigRequest {}
 
+// Pixel format of the LED strip. Mirrors the firmware's PixelFormat
+// (kd_pixdriver): RGBCCT = RGB + dual white (warm + cool, e.g. FW1906).
+enum LEDFormat {
+    LED_FORMAT_UNSPECIFIED = 0;
+    LED_FORMAT_RGB = 1;
+    LED_FORMAT_RGBW = 2;
+    LED_FORMAT_RGBCCT = 3;
+}
+
 message LEDConfig {
     bool has_leds = 1;
     uint32 led_count = 2;
-    bool is_rgbw = 3;
+    bool is_rgbw = 3 [deprecated = true];  // Superseded by format; still set for old clients
     string pixdriver_version = 4;
+    LEDFormat format = 5;
 }
 
 message LEDColor {
     uint32 r = 1;
     uint32 g = 2;
     uint32 b = 3;
-    uint32 w = 4;  // Optional for RGBW
+    uint32 w = 4;   // Single white (RGBW) / warm white (RGBCCT)
+    uint32 cw = 5;  // Cool white (RGBCCT only)
 }
 
 message SetLEDChannel {
