@@ -57,7 +57,9 @@ message TranquilMessage {
         // Smart reporting: state/mode/track/playlist changes send immediately; progress-only updates use cooldown (local: 1s, cloud: 5-10s)
         PlayerState player_state = 53; //response to above, also broadcast on state change to local clients &&& response to above, also sent on state change to cloud
 
-        // Motion/LED Configuration (NVS-backed)
+        // Motion/LED Configuration (NVS-backed). Local clients use the REST
+        // surface (/api/config, /api/presets, /api/config/calibration); these
+        // messages remain for schema parity and are not dispatched on the socket.
         GetConfigRequest get_config_request = 20; //from local client, responds with GetConfigResponse &&& N/A - not used
         GetConfigResponse get_config_response = 21; //response to above &&& N/A - not used
         SetConfigRequest set_config_request = 22; //from local client, sets motion/LED config, responds with SetConfigResponse &&& N/A - not used
@@ -89,6 +91,7 @@ message TranquilMessage {
         JoinResponse join_response = 104; //N/A not used &&& sent by server on websocket connect with server info and needs_claimed
         ClaimDevice claim_device = 105; //N/a Not used &&& sent by us to server if we need to claim, token from NVS
         FactoryResetRequest factory_reset_request = 106; //from local client, factory resets device, responds with CommandResult &&& from server, factory resets device, responds with CommandResult
+        TranquilRebootRequest reboot_request = 117; //from local client, restarts the device (settings kept), responds with CommandResult &&& from server, same
 
         // Certificate management
         CertReport cert_report = 107; //N/A - not used &&& sent to server on connect with current cert info
@@ -314,7 +317,13 @@ message SetLoop {
     bool enabled = 1;
 }
 
-message GetPlayerState {}
+message GetPlayerState {
+    // Cloud only. When non-zero the device keeps progress-only PlayerState
+    // updates flowing at the fast (~2s) cadence for this many seconds, so a
+    // remote client that is actively watching sees smooth progress without
+    // the device paying for it when nobody is looking. 0 = plain query.
+    uint32 watch_seconds = 1;
+}
 
 message PlayerState {
     enum PlaybackState {
@@ -363,6 +372,20 @@ message LEDConfig {
     bool is_rgbw = 3 [deprecated = true];  // Superseded by format; still set for old clients
     string pixdriver_version = 4;
     LEDFormat format = 5;
+    // Live per-channel state. Sent with every LEDConfig (in reply to
+    // LEDConfigRequest and, debounced, whenever a channel changes) so both
+    // LAN clients and the cloud mirror what the strip is doing.
+    repeated LEDChannelState channels = 6;
+}
+
+// Current effect state of one LED channel.
+message LEDChannelState {
+    uint32 channel = 1;
+    string effect_id = 2;
+    uint32 brightness = 3;   // 0-255
+    uint32 speed = 4;        // 1-10
+    bool enabled = 5;
+    LEDColor color = 6;
 }
 
 message LEDColor {
@@ -373,12 +396,15 @@ message LEDColor {
     uint32 cw = 5;  // Cool white (RGBCCT only)
 }
 
+// Partial update: only fields that are present are applied (effect_id
+// empty = unchanged, color absent = unchanged). Responds with CommandResult;
+// the resulting state is broadcast as LEDConfig.
 message SetLEDChannel {
     uint32 channel = 1;
     string effect_id = 2;
-    uint32 brightness = 3;
-    uint32 speed = 4;
-    bool enabled = 5;
+    optional uint32 brightness = 3;  // 0-255
+    optional uint32 speed = 4;       // 1-10 (clamped)
+    optional bool enabled = 5;
     LEDColor color = 6;
 }
 
@@ -406,6 +432,16 @@ message SystemInfo {
     bool is_homed = 4;
     uint32 free_heap = 5;
     string hostname = 6;
+    bool is_homing = 7;        // A homing/calibration run is in progress
+    uint32 uptime_s = 8;
+    int32 wifi_rssi = 9;       // dBm, 0 if unknown
+    uint32 free_psram = 10;
+    string ip_address = 11;
+}
+
+// Restart the device (settings and library are kept).
+message TranquilRebootRequest {
+    string reason = 1;
 }
 
 // =============================================================================
@@ -454,17 +490,26 @@ message MotionConfigProto {
 
     uint32 steps_per_rev = 1;
     uint32 microsteps = 2;
-    int32 rho_max_rpm = 6;
+    int32 rho_max_rpm = 6;               // default path speed (units/min)
     uint32 theta_current_ma = 7;
     uint32 rho_current_ma = 8;
     uint32 stallguard_threshold = 9;
+    // Advanced motion shaping (applied live, no re-home needed)
+    uint32 accel_steps_s2 = 12;          // per-motor step acceleration
+    uint32 junction_dv_steps_s = 13;     // max per-axis step-rate jump at a junction
+    float theta_max_rot_per_min = 14;    // theta spin-rate safety cap
+    uint32 motor_idle_timeout_s = 15;    // de-energize motors after idle (0 = never)
 }
 
-// LED configuration
+// LED strip hardware configuration (applied live by the firmware)
 message LEDConfigProto {
     bool has_leds = 1;
     uint32 led_count = 2;
-    bool is_rgbw = 3;
+    bool is_rgbw = 3 [deprecated = true];  // Superseded by format
+    LEDFormat format = 4;
+    string ic_type = 5;      // "ws2812" | "sk6812" | "fw1906"
+    string color_order = 6;  // "rgb" | "rbg" | "grb" | "gbr" | "brg" | "bgr"
+    bool white_swap = 7;     // RGBCCT: swap warm/cool white wire order
 }
 
 // Calibration data from homing
