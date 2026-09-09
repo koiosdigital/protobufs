@@ -107,6 +107,9 @@ message TranquilMessage {
         // Purchase receipt sync
         SyncPurchasesRequest sync_purchases_request = 115; //N/A - not used &&& sent to server on boot to sync purchased patterns
         SyncPurchasesResponse sync_purchases_response = 116; //N/A - not used &&& from server with all purchase receipts for this device
+
+        // Scheduler: run one action right now (Run now / Test in the app)
+        RunScheduleAction run_schedule_action = 118; //from local client, responds with CommandResult &&& from server, responds with CommandResult
     }
 }
 
@@ -437,6 +440,8 @@ message SystemInfo {
     int32 wifi_rssi = 9;       // dBm, 0 if unknown
     uint32 free_psram = 10;
     string ip_address = 11;
+    bool quiet_hours_active = 12;  // A quiet-hours window is active right now
+    string timezone = 13;          // IANA zone the schedule is evaluated in (e.g. "America/New_York")
 }
 
 // Restart the device (settings and library are kept).
@@ -449,6 +454,17 @@ message TranquilRebootRequest {
 // =============================================================================
 message TranquilScheduleRequest {}
 
+// Partial LED patch applied by SET_LED_STATE. Absent fields are left as they
+// are, so "lights off" is just {enabled: false} and "warm white 40%" is
+// {enabled: true, effect_id: "SOLID", brightness: 102, color: {...}}.
+message ScheduleLedState {
+    optional string effect_id = 1;
+    optional uint32 brightness = 2;  // 0-255
+    optional uint32 speed = 3;       // effect speed 1-10
+    optional bool enabled = 4;
+    LEDColor color = 5;              // set only when present
+}
+
 message ScheduleAction {
     enum ScheduleActionType {
         SCHEDULE_ACTION_TYPE_UNSPECIFIED = 0;
@@ -457,19 +473,53 @@ message ScheduleAction {
         SCHEDULE_ACTION_TYPE_PLAY_RANDOM_PATTERN = 3;
         SCHEDULE_ACTION_TYPE_PLAY_PLAYLIST = 4;
         SCHEDULE_ACTION_TYPE_PLAY_PATTERN = 5;
+        SCHEDULE_ACTION_TYPE_SET_LED_STATE = 6;   // led
+        SCHEDULE_ACTION_TYPE_SET_SPEED = 7;       // feed_rate
+        SCHEDULE_ACTION_TYPE_STOP = 8;            // stop playback
     }
     ScheduleActionType type = 1;
-    string uuid = 2; //used only for play_playlist / play_pattern;
+    string uuid = 2;             // PLAY_PLAYLIST / PLAY_PATTERN
+    ScheduleLedState led = 3;    // SET_LED_STATE (applied to every channel)
+    float feed_rate = 4;         // SET_SPEED, ball speed 1.0-5.0
+    bool shuffle = 5;            // PLAY_PLAYLIST
+    bool loop = 6;               // PLAY_PLAYLIST
 }
 
 message TranquilScheduleItem {
-    uint32 days_of_week = 1;
-    uint32 time_of_day = 2;
+    uint32 days_of_week = 1;     // bit0 = Sunday .. bit6 = Saturday
+    uint32 time_of_day = 2;      // seconds since local midnight (0-86399)
     ScheduleAction action = 3;
+    uint32 id = 4;               // stable id; 0 = let the device assign one
+    string name = 5;             // optional label
+    optional bool enabled = 6;           // absent = enabled
+    optional bool obey_quiet_hours = 7;  // absent = honours quiet hours
+}
+
+// Quiet hours: windows during which schedules that honour them are skipped.
+// A window whose end is before its start wraps past midnight; the day mask
+// names the day the window STARTS on.
+message TranquilQuietWindow {
+    uint32 day_mask = 1;         // bit0 = Sunday .. bit6 = Saturday
+    uint32 start_min = 2;        // minutes since local midnight (0-1439)
+    uint32 end_min = 3;          // minutes since local midnight (0-1439)
+    bool enabled = 4;
+}
+
+message TranquilQuietHours {
+    repeated TranquilQuietWindow windows = 1;  // max 4
+    bool stop_playback = 2;      // stop the table when a window starts
+    bool lights_off = 3;         // turn the LEDs off when a window starts (restored when it ends)
 }
 
 message TranquilSchedule {
-    repeated TranquilScheduleItem schedule_items = 1;
+    repeated TranquilScheduleItem schedule_items = 1;  // max 32
+    TranquilQuietHours quiet_hours = 2;                // absent on a set = leave unchanged
+}
+
+// Run an action immediately, bypassing the schedule. `force` ignores quiet hours.
+message RunScheduleAction {
+    ScheduleAction action = 1;
+    bool force = 2;
 }
 
 // =============================================================================
