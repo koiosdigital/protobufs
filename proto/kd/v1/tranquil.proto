@@ -112,9 +112,9 @@ message TranquilMessage {
         RunScheduleAction run_schedule_action = 118; //from local client, responds with CommandResult &&& from server, responds with CommandResult
 
         // Random play: start a random pattern now, optionally chaining random patterns forever
-        PlayRandom play_random = 119; //from local client, responds with CommandResult &&& from server, responds with CommandResult
+        PlayRandom play_random = 122; //from local client, responds with CommandResult &&& from server, responds with CommandResult
         // Toggle random-loop mode without interrupting the current pattern
-        SetRandomLoop set_random_loop = 120; //from local client, responds with CommandResult &&& from server, responds with CommandResult
+        SetRandomLoop set_random_loop = 123; //from local client, responds with CommandResult &&& from server, responds with CommandResult
     }
 }
 
