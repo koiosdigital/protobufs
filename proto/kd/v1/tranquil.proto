@@ -110,6 +110,11 @@ message TranquilMessage {
 
         // Scheduler: run one action right now (Run now / Test in the app)
         RunScheduleAction run_schedule_action = 118; //from local client, responds with CommandResult &&& from server, responds with CommandResult
+
+        // Random play: start a random pattern now, optionally chaining random patterns forever
+        PlayRandom play_random = 119; //from local client, responds with CommandResult &&& from server, responds with CommandResult
+        // Toggle random-loop mode without interrupting the current pattern
+        SetRandomLoop set_random_loop = 120; //from local client, responds with CommandResult &&& from server, responds with CommandResult
     }
 }
 
@@ -320,6 +325,20 @@ message SetLoop {
     bool enabled = 1;
 }
 
+// Play a random pattern from the library now. loop = keep chaining random
+// patterns after each one completes (PLAY_MODE_RANDOM_LOOP).
+message PlayRandom {
+    bool loop = 1;
+}
+
+// Random-loop toggle. Enabling while a pattern plays leaves it running and
+// chains random patterns after it; enabling while stopped starts one now.
+// Disabling lets the current pattern finish, then stops. Playing a pattern or
+// a playlist by hand also clears the mode.
+message SetRandomLoop {
+    bool enabled = 1;
+}
+
 message GetPlayerState {
     // Cloud only. When non-zero the device keeps progress-only PlayerState
     // updates flowing at the fast (~2s) cadence for this many seconds, so a
@@ -341,6 +360,7 @@ message PlayerState {
         PLAY_MODE_PLAYLIST = 2;
         PLAY_MODE_PLAYLIST_LOOP = 3;
         PLAY_MODE_PLAYLIST_SHUFFLE = 4;
+        PLAY_MODE_RANDOM_LOOP = 5;     // random pattern after random pattern, until stopped
     }
     PlaybackState state = 1;
     PlayMode mode = 2;
