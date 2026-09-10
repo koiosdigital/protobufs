@@ -669,17 +669,22 @@ message HomeResponse {
 // License request from device
 message LicenseRequest {
     string device_id = 1;              // Certificate CN
-    bytes current_license_hash = 2;    // SHA-256 of current license (for freshness)
+    // SHA-256 over the serialized LicensePayload the device holds (the bytes
+    // the signature covers). Empty when it has no license. The server answers
+    // `unchanged` when this matches the license it last issued and that
+    // license is not close to expiry.
+    bytes current_license_hash = 2;
     int64 device_timestamp = 3;        // UTC timestamp
 }
 
 // License response from server
 message LicenseResponse {
     bool success = 1;
-    LicensePayload license = 2;
+    LicensePayload license = 2;        // absent when unchanged
     bytes signature = 3;               // Server RSA signature over license
     int64 server_timestamp = 4;
     string error = 5;
+    bool unchanged = 6;                // the license the device holds is current; nothing to save
 }
 
 // License content (signed by server)
@@ -704,7 +709,13 @@ message PurchaseReceipt {
 }
 
 // Request to sync all purchases for this device
-message SyncPurchasesRequest {}
+message SyncPurchasesRequest {
+    // Freshness: SHA-256 over the receipt_ids the device holds, sorted
+    // bytewise and joined with "\n"; empty when it holds none. The server
+    // replies with no receipts when this matches its entitlement set.
+    bytes receipts_digest = 1;
+    uint32 receipt_count = 2;
+}
 
 // Response with all purchase receipts for this device
 message SyncPurchasesResponse {
