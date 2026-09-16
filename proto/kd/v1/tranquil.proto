@@ -11,7 +11,7 @@ package kd.v1;
 message TranquilMessage {
     oneof message {
         // Schedule (cloud sync)
-        TranquilScheduleRequest schedule_request = 1; //client sends, responds with TranquilSchedule &&& bidirectional, responds with TranquilSchedule - send on boot to cloud to get latest sched.
+        TranquilScheduleRequest schedule_request = 1; //client sends, responds with TranquilSchedule &&& from server, responds with TranquilSchedule (the device pushes its Schedule on connect and on change)
         TranquilSchedule schedule = 2; //bidirectional, sent by client to update our schedule, sent by us to notify in response to above &&& bidirectional, sent by server to update our schedule, sent by us to notify in response to above
 
         // Pattern management
@@ -25,7 +25,7 @@ message TranquilMessage {
         PatternInfo pattern_info = 42; //response to above &&& response to above
 
         // Pattern download progress (websocket broadcast)
-        PatternDownloadProgressReport pattern_download_progress = 56; //broadcast to local clients when downloads active, every 5% per job &&& sent to cloud to report download progress
+        PatternDownloadProgressReport pattern_download_progress = 56; //broadcast to local clients on progress change (monotonic, throttled) &&& sent to cloud to report download progress
         // Local upload pipeline progress (websocket broadcast)
         PatternConversionProgressReport pattern_conversion_progress = 57; //broadcast to local clients during .thr->binary conversion &&& sent to cloud to report conversion progress
         PatternThumbProgressReport pattern_thumb_progress = 58; //broadcast to local clients during thumbnail render &&& sent to cloud to report thumbnail progress
@@ -90,7 +90,7 @@ message TranquilMessage {
         UploadCoreDump upload_core_dump = 101; //N/A - not used &&& sent to server on crash recovery with core dump data
         JoinResponse join_response = 104; //N/A not used &&& sent by server on websocket connect with server info and needs_claimed
         ClaimDevice claim_device = 105; //N/a Not used &&& sent by us to server if we need to claim, token from NVS
-        FactoryResetRequest factory_reset_request = 106; //from local client, factory resets device, responds with CommandResult &&& from server, factory resets device, responds with CommandResult
+        FactoryResetRequest factory_reset_request = 106; //from local client, factory resets device, responds with CommandResult &&& refused from server (LAN only), responds with CommandResult(false)
         TranquilRebootRequest reboot_request = 117; //from local client, restarts the device (settings kept), responds with CommandResult &&& from server, same
 
         // Certificate management
@@ -116,6 +116,11 @@ message TranquilMessage {
         // Toggle random-loop mode without interrupting the current pattern
         SetRandomLoop set_random_loop = 123; //from local client, responds with CommandResult &&& from server, responds with CommandResult
     }
+
+    // Optional correlation id set by the sender of a command; the device
+    // echoes it in CommandResult.request_id so a cloud client can learn the
+    // outcome of its own command.
+    string request_id = 200;
 }
 
 // =============================================================================
@@ -269,14 +274,19 @@ message CreatePlaylist {
     string name = 1;
     string description = 2;
     repeated string pattern_uuids = 3;
+    string uuid = 4;               // optional client-chosen id (matches the REST surface); empty = device assigns
 }
 
+// Partial update: absent optional fields are left unchanged. pattern_uuids
+// replaces the list only when replace_patterns is true (so an empty list can
+// clear it); when false the list is ignored.
 message UpdatePlaylist {
     string uuid = 1;
-    string name = 2;
-    string description = 3;
+    optional string name = 2;
+    optional string description = 3;
     repeated string pattern_uuids = 4;
-    string featured_pattern = 5;
+    optional string featured_pattern = 5;
+    bool replace_patterns = 6;
 }
 
 message DeletePlaylist {
@@ -315,7 +325,9 @@ message PlaylistNavigateCommand {
     Direction direction = 1;
 }
 
-message StopPlayback {}
+message StopPlayback {
+    bool emergency = 1;            // halt motion immediately instead of draining queued moves
+}
 
 message SetFeedRate {
     float feed_rate_rpm = 1;

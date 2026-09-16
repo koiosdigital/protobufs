@@ -8,6 +8,7 @@ message CommandResult {
     bool success = 1;
     int32 error_code = 2;
     string detail = 3; // Optional human-readable detail
+    string request_id = 4; // Echo of the request's request_id (TranquilMessage.request_id) when the sender set one
 }
 
 message Ping {
