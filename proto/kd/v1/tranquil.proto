@@ -539,7 +539,11 @@ message TranquilQuietWindow {
 
 message TranquilQuietHours {
     repeated TranquilQuietWindow windows = 1;  // max 4
-    bool stop_playback = 2;      // stop the table when a window starts
+    // Pause whatever is playing (single pattern, playlist or random loop) when
+    // a window starts and resume it when the window ends. A pause or play
+    // issued by hand during the window takes precedence; nothing is resumed
+    // that the device did not pause itself. (Was stop_playback; same tag.)
+    bool pause_playback = 2;
     bool lights_off = 3;         // turn the LEDs off when a window starts (restored when it ends)
 }
 
