@@ -9,9 +9,7 @@ message MatrxMessage {
     //  4/5/11 — AppRenderRequest/AppRenderResponse/AppDataChunk: chunked
     //           render-over-socket, replaced by HTTPS pulls from the kd-api
     //           DEVICE plane (GET /d/v1/installations/:id/render.webp).
-    //  107-110 — Cert* messages: device PKI is owned by the Koios SaaS now,
-    //            renewal never rides the message channel.
-    reserved 4, 5, 11, 107, 108, 109, 110;
+    reserved 4, 5, 11;
 
     oneof message {
         ScheduleRequest schedule_request = 1;
@@ -36,6 +34,12 @@ message MatrxMessage {
 
         // Sent from server to trigger factory reset
         FactoryResetRequest factory_reset_request = 106; //from server
+
+        // Certificate lifecycle (over the authenticated session)
+        CertReport cert_report = 107; //to server - current cert on session ready
+        CertRenewRequired cert_renew_required = 108; //from server - cert approaching expiry
+        CertRenewRequest cert_renew_request = 109; //to server - CSR for renewal
+        CertRenewResponse cert_renew_response = 110; //from server - new signed cert
     }
 }
 
